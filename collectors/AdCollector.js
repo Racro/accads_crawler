@@ -51,6 +51,8 @@ class AdCollector extends BaseCollector {
         this._nClickedAdChoicesLinks = 0;
         this._adChoicesLinkAttrs = [];
         this._timeStampBeforeInteraction = 0;
+        // Ritik
+        this._adData = {'urls': null, 'handles': null, 'info': []};
         // create a folder for ad images
         fs.mkdirSync(path.join(outputPath, 'ad_imgs'), {recursive: true});
         fs.mkdirSync(path.join(outputPath, 'ad_videos'), {recursive: true});
@@ -113,6 +115,38 @@ class AdCollector extends BaseCollector {
     async saveHTML(page, ssSuffix, outFolder="", fullPage=true) {
         const outPath = path.join(this._outputPath, outFolder);
         await pageUtils.saveHTML(page, outPath, this._urlHash, ssSuffix, this._htmlCounter++, this._log);
+    }
+
+    // Ritik
+    /**
+     * @param {string} url
+     */
+    async saveAdData(url) {
+        // console.log('111111111111\n');
+        var url_key = url;
+        // extract url_key to name screenshot folders 
+        let pattern = /:\/\/(ww[\w\d]\.?)/;
+        let match = url.match(pattern);
+        
+        if (match){
+            url_key = url.split(match[0])[1];
+        } else {
+            url_key = url.split('://')[1];
+        }
+        url_key = url_key.split('/')[0]
+
+        const outPath = `./data/adData/${url_key}.json`;
+
+        if (!fs.existsSync('./data/adData')){
+            fs.mkdirSync('./data/adData');
+        }
+
+        var json = JSON.stringify(this._adData);
+        fs.writeFile(outPath, json, function(err) {
+            if (err) throw err;
+            console.log('complete');
+            }
+        );
     }
 
     /**
@@ -440,6 +474,10 @@ class AdCollector extends BaseCollector {
             const ad = this._adsWHandles[i];
             ad.attrs.index = i;
             log(`Will scrape ad: ${this.printAdAttrs(ad.attrs)}`);
+
+            // Ritik
+            this._adData['info'].push(ad.attrs);
+
             if(ENABLE_SCROLLING) {
                 log('Scrolling to ad');
                 await this.scrollToAd(ad.handle, log);
@@ -597,9 +635,28 @@ class AdCollector extends BaseCollector {
         this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
         // Scrape the ads
         const {adDetails, scrapeResults} = await this.scrapeAds(page);
+
+        // Ritik
+        const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
+        const adHandles = this._adsWHandles.map(ad => ad.handle);
+
+        var urls = [];
+        
+        for (const adURL of adURLs) {
+            try {
+                urls.push(adURL);
+            } catch (error) {
+                console.log(`❌ Scraper: Error while saving adData: ${error}`);
+            }
+        }
+
+        this._adData['urls'] = urls;
+        this._adData['handles'] = adHandles.length;
+        // console.error('3333333333\n');
+        // console.error(adHandles);
+        await this.saveAdData(page.url());
+
         if(ENABLE_CLICKING_TO_ADS) {
-            const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
-            const adHandles = this._adsWHandles.map(ad => ad.handle);
             this._log(`Will click on ${adURLs.length} ads and ${adHandles.length} ad handles.`);
             await this.clickAds({adURLs, adHandles}, this._log, page, options.context);
         }

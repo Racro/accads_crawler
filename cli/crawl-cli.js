@@ -34,6 +34,7 @@ program
     .option('--config <path>', 'crawl configuration file')
     .option('--autoconsent-action <action>', 'dismiss cookie popups. Possible values: optout, optin')
     .option('--chromium-version <version_number>', 'use custom version of chromium')
+    .option('--extn <extn_name>', 'Use either control/adblock/ublock; Default: control')
     .parse(process.argv);
 
 /**
@@ -54,8 +55,9 @@ program
  * @param {number} maxLoadTimeMs
  * @param {number} extraExecutionTimeMs
  * @param {Object.<string, boolean>} collectorFlags
+ * @param {string} extension
  */
-async function run(inputUrls, outputPath, verbose, logPath, numberOfCrawlers, dataCollectors, reporters, forceOverwrite, filterOutFirstParty, emulateMobile, proxyHost, regionCode, antiBotDetection, chromiumVersion, maxLoadTimeMs, extraExecutionTimeMs, collectorFlags) {
+async function run(inputUrls, outputPath, verbose, logPath, numberOfCrawlers, dataCollectors, reporters, forceOverwrite, filterOutFirstParty, emulateMobile, proxyHost, regionCode, antiBotDetection, chromiumVersion, maxLoadTimeMs, extraExecutionTimeMs, collectorFlags, extension) {
     const startTime = new Date();
 
     reporters.forEach(reporter => {
@@ -175,6 +177,7 @@ async function run(inputUrls, outputPath, verbose, logPath, numberOfCrawlers, da
             extraExecutionTimeMs,
             collectorFlags,
             outputPath,
+            extension,
         });
         log(chalk.green('\n✅ Finished successfully.'));
     } catch(e) {
@@ -219,6 +222,15 @@ if (config.dataCollectors) {
     dataCollectors = getCollectorIds().map(id => createCollector(id));
 }
 
+// Ritik
+/**
+ * @type {string}
+ */
+let extension = 'control';
+if (config.extn){
+    extension = config.extn;
+}
+
 /**
  * @type {BaseReporter[]}
  */
@@ -258,5 +270,5 @@ if (!config.urls || !config.output) {
         return item;
     });
 
-    run(urls, config.output, config.verbose, config.logPath, config.crawlers || null, dataCollectors, reporters, config.forceOverwrite, config.filterOutFirstParty, config.emulateMobile, config.proxyConfig, config.regionCode, !config.disableAntiBot, config.chromiumVersion, config.maxLoadTimeMs, config.extraExecutionTimeMs, collectorFlags);
+    run(urls, config.output, config.verbose, config.logPath, config.crawlers || null, dataCollectors, reporters, config.forceOverwrite, config.filterOutFirstParty, config.emulateMobile, config.proxyConfig, config.regionCode, !config.disableAntiBot, config.chromiumVersion, config.maxLoadTimeMs, config.extraExecutionTimeMs, collectorFlags, extension);
 }

@@ -34,21 +34,37 @@ const VISUAL_DEBUG = false;
  * @param {function(...any):void} log
  * @param {string} proxyHost
  * @param {string} executablePath path to chromium executable to use
+ * @param {string} extension path to chromium executable to use
  */
-function openBrowser(log, proxyHost, executablePath) {
+function openBrowser(log, proxyHost, executablePath, extension) {
     /**
      * @type {import('puppeteer').BrowserLaunchArgumentOptions}
      */
-    const args = {
-        args: [
-            // enable FLoC
-            '--no-sandbox',
-            '--disable-web-security',
-            '--disable-features=IsolateOrigins,site-per-process',
-            '--enable-blink-features=InterestCohortAPI',
-            '--enable-features="FederatedLearningOfCohorts:update_interval/10s/minimum_history_domain_size_required/1,FlocIdSortingLshBasedComputation,InterestCohortFeaturePolicy"'
-        ]
-    };
+    var args = null;
+    if (extension === 'control'){
+        args = {
+            args: [
+                // enable FLoC
+                '--no-sandbox',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--start-maximized',
+            ]
+        };
+    } else {
+        args = {
+            args: [
+                // enable FLoC
+                '--no-sandbox',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--start-maximized',
+                `--disable-extensions-except=./extn_src/${extension}`,
+                `--load-extension=./extn_src/${extension}`
+            ]
+        };
+    }
+
     if (VISUAL_DEBUG) {
         args.headless = false;
         args.devtools = false;
@@ -75,7 +91,7 @@ function openBrowser(log, proxyHost, executablePath) {
 /**
  * @param {puppeteer.BrowserContext} context
  * @param {URL} url
- * @param {{collectors: import('./collectors/BaseCollector')[];log: function(...any):void;urlFilter: function(string, string):boolean;emulateMobile: boolean;emulateUserAgent: boolean;runInEveryFrame: function():void;maxLoadTimeMs: number;extraExecutionTimeMs: number;collectorFlags: Object<string, string>;outputPath: string;urlHash: string;}} data
+ * @param {{collectors: import('./collectors/BaseCollector')[];log: function(...any):void;urlFilter: function(string, string):boolean;emulateMobile: boolean;emulateUserAgent: boolean;runInEveryFrame: function():void;maxLoadTimeMs: number;extraExecutionTimeMs: number;collectorFlags: Object<string, string>;outputPath: string;urlHash: string;extension: string;}} data
  * @returns {Promise<CollectResult>}
  */
 async function getSiteData(context, url, {
@@ -89,7 +105,8 @@ async function getSiteData(context, url, {
     extraExecutionTimeMs,
     collectorFlags,
     outputPath,
-    urlHash
+    urlHash,
+    extension
 }) {
     const testStarted = Date.now();
 
@@ -107,7 +124,7 @@ async function getSiteData(context, url, {
         urlHash,
         emulateMobile
     };
-
+    // console.error('00000000000\n');
     for (let collector of collectors) {
         const timer = createTimer();
 
@@ -288,6 +305,7 @@ async function getSiteData(context, url, {
         const getDataTimer = createTimer();
         try {
             // eslint-disable-next-line no-await-in-loop
+            // console.error('2222222222\n');
             const collectorData = await collector.getData({
                 finalUrl,
                 urlFilter: urlFilter && urlFilter.bind(null, finalUrl),
@@ -344,12 +362,12 @@ function isThirdPartyRequest(documentUrl, requestUrl) {
 
 /**
  * @param {URL} url
- * @param {{collectors?: import('./collectors/BaseCollector')[], log?: function(...any):void, filterOutFirstParty?: boolean, emulateMobile?: boolean, emulateUserAgent?: boolean, proxyHost?: string, browserContext?: puppeteer.BrowserContext, runInEveryFrame?: function():void, executablePath?: string, maxLoadTimeMs?: number, extraExecutionTimeMs?: number, collectorFlags?: Object.<string, string>, outputPath: string, urlHash: string}} options
+ * @param {{collectors?: import('./collectors/BaseCollector')[], log?: function(...any):void, filterOutFirstParty?: boolean, emulateMobile?: boolean, emulateUserAgent?: boolean, proxyHost?: string, browserContext?: puppeteer.BrowserContext, runInEveryFrame?: function():void, executablePath?: string, maxLoadTimeMs?: number, extraExecutionTimeMs?: number, collectorFlags?: Object.<string, string>, outputPath: string, urlHash: string, extension: string}} options
  * @returns {Promise<CollectResult>}
  */
 module.exports = async (url, options) => {
     const log = options.log || (() => {});
-    const browser = options.browserContext ? null : await openBrowser(log, options.proxyHost, options.executablePath);
+    const browser = options.browserContext ? null : await openBrowser(log, options.proxyHost, options.executablePath, options.extension);
     // Create a new incognito browser context.
     const context = options.browserContext || await browser.createIncognitoBrowserContext();
 
@@ -371,7 +389,8 @@ module.exports = async (url, options) => {
             extraExecutionTimeMs,
             collectorFlags: options.collectorFlags,
             outputPath: options.outputPath,
-            urlHash: options.urlHash
+            urlHash: options.urlHash,
+            extension: options.extension,
         }), maxTotalTimeMs);
     } catch(e) {
         log(chalk.red('******************* ERROR: Crawl failed *******************'), e.message, chalk.gray(e.stack));
