@@ -1,1 +1,4 @@
-https://www.geeksforgeeks.org/find-length-of-a-linked-list-iterative-and-recursive/
+https://stackoverflow.com/questions/67698176/error-loading-webview-error-could-not-register-service-workers-typeerror-fai
+https://www.nytimes.com
+https://www.chess.org
+https://www.geeksforgeeks.org/deletion-in-linked-list/

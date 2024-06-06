@@ -82,7 +82,7 @@ async function run(inputUrls, outputPath, verbose, logPath, numberOfCrawlers, da
 
     const urls = inputUrls.filter(item => {
         const urlString = (typeof item === 'string') ? item : item.url;
-
+        // console.error(`\n URL String: ${urlString} \n`);
         /**
          * @type {URL}
          */

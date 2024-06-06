@@ -14,7 +14,7 @@ const {createUniqueUrlName} = require('./helpers/hash');
 const BaseCollector = require('./collectors/BaseCollector');
 const notABot = require('./helpers/notABot');
 
-const MAX_NUMBER_OF_CRAWLERS = 38;// by trial and error there seems to be network bandwidth issues with more than 38 browsers. 
+const MAX_NUMBER_OF_CRAWLERS = 1;// by trial and error there seems to be network bandwidth issues with more than 38 browsers. 
 const MAX_NUMBER_OF_RETRIES = 2;
 
 /**
@@ -111,7 +111,8 @@ module.exports = async options => {
 
         async.retry(MAX_NUMBER_OF_RETRIES, task, err => {
             if (err) {
-                log(chalk.red(`Max number of retries (${MAX_NUMBER_OF_RETRIES}) exceeded for "${urlString}".`));
+                log(err)
+                log(chalk.red(`Max number of retries (${MAX_NUMBER_OF_RETRIES}) exceeded for "${urlString}" with err: ${err}`));
                 failureCallback(urlString, err);
             } else {
                 log(chalk.cyan(`Processing "${urlString}" took ${timer.getElapsedTime()}s.`));

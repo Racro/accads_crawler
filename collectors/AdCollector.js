@@ -281,6 +281,11 @@ class AdCollector extends BaseCollector {
      * @param {string[]} selectors
      */
     async applyFilterRules(page, selectors) {
+        // Listen for console events and log them to the Node console
+        page.on('console', msg => {
+            for (let i = 0; i < msg.args().length; ++i)
+                console.error(`${i}: ${msg.args()[i]}`);
+        });
         return await page.evaluateHandle(selectors => {
             // Add visible elements detected by EL to a set.
             let ads = new Set();
@@ -289,11 +294,13 @@ class AdCollector extends BaseCollector {
                 matches.forEach(match => {
                     if (isShown(match)) {  // we check if the element is visible
                         ads.add(match);
+                        console.error(`\n match: ${selector} \n`);
                     }
                 });
             });
             // Remove all elements that are children of another element in the set.
             // We just want the top-most element identified as an ad.
+
             for (let ad of ads) {
                 // For each element in the set, traverse up until it hits <body>, or another
                 // element in the set.

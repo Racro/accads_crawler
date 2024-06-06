@@ -1,10 +1,13 @@
 /* eslint-disable max-lines */
 const puppeteer = require('puppeteer');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const puppeteerExtra = require('puppeteer-extra');
 const chalk = require('chalk').default;
 const {createTimer} = require('./helpers/timer');
 const wait = require('./helpers/wait');
 const tldts = require('tldts');
 const fs = require('fs');
+var Xvfb = require('xvfb');
 // const fingerprintDetection = require('./helpers/fingerprintDetection');
 // TODO: try converting back to module.exports
 const fpSrc = fs.readFileSync('./helpers/fingerprintDetection.js', 'utf8');
@@ -14,6 +17,14 @@ chalk.enabled = ENABLE_CHALK;
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36';
 const MOBILE_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; Pixel 2 XL) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/112.0.0.0 Mobile Safari/537.36';
+
+// Ritik
+var xvfb = new Xvfb({
+    silent: true,
+    reuse: true,
+    xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
+});
+// xvfb.startSync((err)=>{if (err) console.error(err)});
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -28,7 +39,7 @@ const MOBILE_VIEWPORT = {
 };
 
 // for debugging: will launch in window mode instad of headless, open devtools and don't close windows after process finishes
-const VISUAL_DEBUG = false;
+const VISUAL_DEBUG = true;
 
 /**
  * @param {function(...any):void} log
@@ -40,6 +51,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
     /**
      * @type {import('puppeteer').BrowserLaunchArgumentOptions}
      */
+
     var args = null;
     if (extension === 'control'){
         args = {
@@ -49,6 +61,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
+                // '--display='+xvfb._display,
             ]
         };
     } else {
@@ -59,8 +72,10 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
-                `--disable-extensions-except=./extn_src/${extension}`,
-                `--load-extension=./extn_src/${extension}`
+                `--disable-extensions-except=./extn_src/${extension}_v2`,
+                `--load-extension=./extn_src/${extension}_v2`,
+                // '--display='+xvfb._display,
+
             ]
         };
     }
@@ -77,15 +92,21 @@ function openBrowser(log, proxyHost, executablePath, extension) {
             log('Invalid proxy URL');
         }
 
-        args.args.push(`--proxy-server=${proxyHost}`);
+        args.args.push(`--proxy-server=$
+        {proxyHost}`);
         args.args.push(`--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE ${url.hostname}"`);
     }
-    if (executablePath) {
-        // @ts-ignore there is no single object that encapsulates properties of both BrowserLaunchArgumentOptions and LaunchOptions that are allowed here
-        args.executablePath = executablePath;
-    }
+    // if (executablePath) {
+    // // if (true) {
+    //     // @ts-ignore there is no single object that encapsulates properties of both BrowserLaunchArgumentOptions and LaunchOptions that are allowed here
+    //     args.executablePath = executablePath;
+    // }
 
-    return puppeteer.launch(args);
+    args.executablePath = '/tmp/chrome_97/chrome';
+    // args.executablePath = '/usr/bin/google-chrome';
+
+    puppeteerExtra.default.use(StealthPlugin());
+    return puppeteerExtra.default.launch(args);
 }
 
 /**
@@ -206,6 +227,8 @@ async function getSiteData(context, url, {
         log(`${target.url()} (${target.type()}) context initiated in ${timer.getElapsedTime()}s`);
     });
 
+    // RITIK CHECK
+
     // Create a new page in a pristine context.
     const page = await context.newPage();
 
@@ -255,6 +278,9 @@ async function getSiteData(context, url, {
 
     // catch and report crash errors
     page.on('error', e => log(chalk.red(e.message)));
+
+    // Ritik - timeput for extension to load in incognito mode/context
+    await new Promise(r => setTimeout(r, 5000));
 
     let timeout = false;
     try {
@@ -335,9 +361,13 @@ async function getSiteData(context, url, {
         }
     }
 
-    if (!VISUAL_DEBUG) {
-        await page.close();
-    }
+    // Ritik
+    // if (!VISUAL_DEBUG) {
+    //     await page.close();
+    // }
+
+    await new Promise(r => setTimeout(r, 100000));
+    await page.close();
 
     return {
         initialUrl: url.toString(),
@@ -369,7 +399,55 @@ module.exports = async (url, options) => {
     const log = options.log || (() => {});
     const browser = options.browserContext ? null : await openBrowser(log, options.proxyHost, options.executablePath, options.extension);
     // Create a new incognito browser context.
+    // const context = options.browserContext || await browser.createIncognitoBrowserContext();
+    
+
+
+    if (options.extension === 'adblock'){
+        try {
+        // const test = await browser.newPage();
+        // // await test.setViewport({ width: 1280, height: 720 });
+        // await test.goto('chrome://extensions', { timeout: 20000 });
+        // await test.screenshot({
+        //     path: 'extension_verification.jpg'
+        // });
+
+            // await sleep(10000);
+            await new Promise(r => setTimeout(r, 10000));
+            const extensionsPage = await browser.newPage();
+            await extensionsPage.goto( 'chrome://extensions/' );
+
+            await extensionsPage.evaluate(`
+            chrome.developerPrivate.getExtensionsInfo().then((extensions) => {
+                extensions.map((extension) => chrome.developerPrivate.updateExtensionConfiguration({extensionId: extension.id, incognitoAccess: true}));
+            });
+            `);
+
+        } catch (e) {
+            console.error('\n00000000000000\n');
+            await browser.close();
+            throw e;
+        };
+    } 
+    else {
+        await new Promise(r => setTimeout(r, 2000));
+        // await sleep(2000);
+    }
+
+    // try {
+    // const test = await browser.newPage();
+    // const version = await test.browser().version();
+    // console.error(`\n VERSION:${version} \n`);
+
+    // } catch (e) {
+    //     await browser.close();
+    //     throw e;
+    // } 
+
     const context = options.browserContext || await browser.createIncognitoBrowserContext();
+
+    // await new Promise(r => setTimeout(r, 5000));
+
 
     let data = null;
 
@@ -397,7 +475,8 @@ module.exports = async (url, options) => {
         throw e;
     } finally {
         // only close the browser if it was created here and not debugging
-        if (browser && !VISUAL_DEBUG) {
+        // if (browser && !VISUAL_DEBUG) {
+        if (browser) {
             log('Closing the context and the browser');
             await context.close();
             log('Context closed');
@@ -406,6 +485,7 @@ module.exports = async (url, options) => {
         }
     }
 
+    await xvfb.stopSync();
     return data;
 };
 
