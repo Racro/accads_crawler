@@ -229,6 +229,8 @@ async function getSiteData(context, url, {
 
     // RITIK CHECK
 
+    // console.log(`REACHED HERE`);
+    // await new Promise(r => setTimeout(r, 5000));
     // Create a new page in a pristine context.
     const page = await context.newPage();
 
@@ -327,15 +329,18 @@ async function getSiteData(context, url, {
      */
     const data = {};
 
+    // var frames = page.frames();
+
+    // for (let frame = 0; frame < frames.length; frame++){
     for (let collector of collectors) {
         const getDataTimer = createTimer();
         try {
             // eslint-disable-next-line no-await-in-loop
-            // console.error('2222222222\n');
             const collectorData = await collector.getData({
                 finalUrl,
                 urlFilter: urlFilter && urlFilter.bind(null, finalUrl),
                 page,
+                // page: frames[frame],
                 outputPath,
                 urlHash,
                 context
@@ -351,6 +356,7 @@ async function getSiteData(context, url, {
             data[collector.id()] = null;
         }
     }
+    // }
 
     for (let target of targets) {
         try {

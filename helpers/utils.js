@@ -435,6 +435,7 @@ async function scrollToElement(elementHandle, log) {
 
 /**
  * @param {puppeteer.Page} page
+ * @param {puppeteer.Page} orig_page
  * @param {puppeteer.ElementHandle} elementHandle
  * @param {string} outputPath
  * @param {string} urlHash
@@ -445,7 +446,7 @@ async function scrollToElement(elementHandle, log) {
  * @param {boolean} disableScrollDebug
  */
 async function takeScreenshotOfElement(
-        page, elementHandle, outputPath, urlHash, ssCounter,
+        page, orig_page, elementHandle, outputPath, urlHash, ssCounter,
             ssSuffix, log, boundingBox, disableScrollDebug=false) {
 
     const ssName = `${urlHash}_${ssCounter}_${ssSuffix}.png`;
@@ -463,8 +464,8 @@ async function takeScreenshotOfElement(
             clip: {
                 x: boundingBox.x,
                 y: boundingBox.y + scrollY,
-                width: Math.min(boundingBox.width, page.viewport().width),
-                height: Math.min(boundingBox.height, page.viewport().height),
+                width: Math.min(boundingBox.width, orig_page.viewport().width),
+                height: Math.min(boundingBox.height, orig_page.viewport().height),
             },
         });
 
@@ -476,8 +477,8 @@ async function takeScreenshotOfElement(
                 clip: {
                     x: boundingBox.x,
                     y: boundingBox.y,
-                    width: Math.min(boundingBox.width, page.viewport().width),
-                    height: Math.min(boundingBox.height, page.viewport().height),
+                    width: Math.min(boundingBox.width, orig_page.viewport().width),
+                    height: Math.min(boundingBox.height, orig_page.viewport().height),
                 },
             });
         }

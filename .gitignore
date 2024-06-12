@@ -2,5 +2,6 @@ node_modules
 .DS_Store
 .vscode/
 data/
+data1/
 summary.json
 **/*.zip
