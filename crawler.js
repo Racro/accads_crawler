@@ -372,7 +372,7 @@ async function getSiteData(context, url, {
     //     await page.close();
     // }
 
-    await new Promise(r => setTimeout(r, 100000));
+    // await new Promise(r => setTimeout(r, 100000));
     await page.close();
 
     return {
