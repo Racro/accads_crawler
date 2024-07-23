@@ -24,7 +24,7 @@ var xvfb = new Xvfb({
     reuse: true,
     xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
 });
-// xvfb.startSync((err)=>{if (err) console.error(err)});
+xvfb.startSync((err)=>{if (err) console.error(err)});
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -61,7 +61,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
-                // '--display='+xvfb._display,
+                '--display='+xvfb._display,
             ]
         };
     } else {
@@ -74,7 +74,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--start-maximized',
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
                 `--load-extension=./extn_src/${extension}_v2`,
-                // '--display='+xvfb._display,
+                '--display='+xvfb._display,
 
             ]
         };
