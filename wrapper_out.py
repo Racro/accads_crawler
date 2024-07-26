@@ -7,7 +7,7 @@ import time
 urls = open('websites.txt', 'r').read().splitlines()
 
 # Docker container names
-containers = ["accads_ctrl", "accads_adb"]
+containers = ["accads_control", "accads_adblock"]
 
 # Build Docker images (assuming Dockerfiles are in the current directory)
 subprocess.run(["docker", "build", "-t", "accads", "-f", "Dockerfile", "."])
@@ -18,7 +18,7 @@ def check_and_start_container(container_name, image_name, extn):
     result = subprocess.run(["docker", "ps", "-q", "-f", f"name={container_name}"], capture_output=True, text=True)
     if not result.stdout.strip():
         print(f"Starting container: {container_name}")
-        subprocess.run(["docker", "run", "-d", "--name", "-v", f"./{extn}:/{extn}", container_name, image_name])
+        subprocess.run(["docker", "run", "-d", "--name", container_name, "-v", f"./{extn}:/{extn}", image_name])
     else:
         print(f"Container {container_name} is already running.")
 
@@ -26,11 +26,10 @@ def feed_url_to_container(container_name, url, extn):
     command = f'docker exec -i {container_name} python3 wrapper_in.py --url={url} --extn={extn}'
     os.system(command)
 
-def handle_container(container_name, image_name, urls, extn):
-    for url in urls:
-        check_and_start_container(container_name, image_name, extn)
-        feed_url_to_container(container_name, url, extn)
-        time.sleep(1)  # Add delay if necessary
+def handle_container(container_name, image_name, url, extn):
+    check_and_start_container(container_name, image_name, extn)
+    feed_url_to_container(container_name, url, extn)
+    time.sleep(1)  # Add delay if necessary
 
 for url in urls:
     # Create multiprocessing processes
@@ -44,7 +43,7 @@ for url in urls:
 
     TIMEOUT = 70
     start = time.time()
-    print(f"joining {job}")
+    print("joining jobs")
     # Wait for all processes to finish
     p1.join(timeout = 60)
     p2.join(timeout = 60)
