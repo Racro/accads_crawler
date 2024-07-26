@@ -422,6 +422,9 @@ module.exports = async (url, options) => {
             await new Promise(r => setTimeout(r, 10000));
             const extensionsPage = await browser.newPage();
             await extensionsPage.goto( 'chrome://extensions/' );
+            await extensionsPage.screenshot({
+                path: '/adblock/extension_verification.jpg'
+            });
 
             await extensionsPage.evaluate(`
             chrome.developerPrivate.getExtensionsInfo().then((extensions) => {
@@ -491,9 +494,10 @@ module.exports = async (url, options) => {
         }
     }
 
-    await xvfb.stopSync();
     return data;
 };
+
+xvfb.stopSync();
 
 /**
  * @typedef {Object} CollectResult

@@ -22,11 +22,13 @@ RUN useradd -m chromiumuser
 USER chromiumuser
 WORKDIR /home/chromiumuser
 
+COPY wrapper_in.py /home/chromiumuser/wrapper_in.py
+
 # Install the git repo
-RUN git clone https://github.com/Racro/accads_crawler.git && cd accads_crawler
+RUN git clone https://github.com/Racro/accads_crawler.git
 
 # Install puppeteer
-RUN cd accads_crawler && npm i --verbose
+# RUN cd accads_crawler && npm i --verbose
 
 # Set the entrypoint to start Chromium
 # ENTRYPOINT ["npm", "run", "crawl", "--", "-u", "", "-o", "./control", "-v", "-f", "-d", "ads", "--reporters", "cli,file", "-l", "./control/", "--autoconsent-action", "optIn"]

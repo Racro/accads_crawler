@@ -8,10 +8,10 @@ urls = open('websites.txt', 'r').read().splitlines()
 
 # Docker container names
 containers = ["accads_control", "accads_adblock"]
+# containers = ["accads_control"]
 
 # Build Docker images (assuming Dockerfiles are in the current directory)
 subprocess.run(["docker", "build", "-t", "accads", "-f", "Dockerfile", "."])
-# subprocess.run(["docker", "build", "-t", "crawler2", "-f", "Dockerfile2", "."])
 
 def check_and_start_container(container_name, image_name, extn):
     """Check if a container is running and start it if it's not."""
