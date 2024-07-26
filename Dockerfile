@@ -1,5 +1,6 @@
 # Use the latest Ubuntu image
-FROM ubuntu:latest
+# FROM ubuntu:latest
+FROM node:18.20.4-alpine3.20
 
 # Use the latest Ubuntu image
 FROM ubuntu:latest
@@ -25,4 +26,4 @@ RUN git clone https://github.com/Racro/accads_crawler.git && cd accads_crawler
 RUN cd accads_crawler && npm i
 
 # Set the entrypoint to start Chromium
-# ENTRYPOINT ["npm", "run", "crawl", "--", "-u", "https://www.google.com", "-o", "./data/", "-v", "-f", "-d", "ads", "--reporters", "cli,file", "-l", "./data/", "--autoconsent-action", "optIn"]
+# ENTRYPOINT ["npm", "run", "crawl", "--", "-u", "", "-o", "./control", "-v", "-f", "-d", "ads", "--reporters", "cli,file", "-l", "./control/", "--autoconsent-action", "optIn"]
