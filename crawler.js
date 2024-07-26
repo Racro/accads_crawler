@@ -494,10 +494,9 @@ module.exports = async (url, options) => {
         }
     }
 
+    await xvfb.stopSync();
     return data;
 };
-
-xvfb.stopSync();
 
 /**
  * @typedef {Object} CollectResult
