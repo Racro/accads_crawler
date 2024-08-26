@@ -27,6 +27,8 @@ COPY wrapper_in.py /home/chromiumuser/wrapper_in.py
 # Install the git repo
 RUN git clone https://github.com/Racro/accads_crawler.git
 
+# ADD ./saved_session /home/chromiumuser/accads_crawler/saved_session
+
 # Install puppeteer
 # RUN cd accads_crawler && npm i --verbose
 
