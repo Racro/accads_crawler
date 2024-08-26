@@ -24,7 +24,7 @@ var xvfb = new Xvfb({
     reuse: true,
     xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
 });
-xvfb.startSync((err)=>{if (err) console.error(err)});
+// xvfb.startSync((err)=>{if (err) console.error(err)});
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -61,7 +61,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
-                '--display='+xvfb._display,
+                '--user-data-dir=./saved_session/',
+                //'--display='+xvfb._display,
             ]
         };
     } else {
@@ -74,7 +75,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--start-maximized',
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
                 `--load-extension=./extn_src/${extension}_v2`,
-                '--display='+xvfb._display,
+                // '--user-data-dir=/tmp/saved_session/',
+                // '--display='+xvfb._display,
 
             ]
         };
@@ -102,8 +104,10 @@ function openBrowser(log, proxyHost, executablePath, extension) {
     //     args.executablePath = executablePath;
     // }
 
+    // args.executablePath = '/tmp/chrome-linux/chrome';
     args.executablePath = '/tmp/chrome_97/chrome';
     // args.executablePath = '/usr/bin/google-chrome';
+    // args.userDataDir = './saved_session/google_login';
 
     puppeteerExtra.default.use(StealthPlugin());
     return puppeteerExtra.default.launch(args);
@@ -372,7 +376,7 @@ async function getSiteData(context, url, {
     //     await page.close();
     // }
 
-    // await new Promise(r => setTimeout(r, 100000));
+    await new Promise(r => setTimeout(r, 100000));
     await page.close();
 
     return {
@@ -453,7 +457,11 @@ module.exports = async (url, options) => {
     //     throw e;
     // } 
 
-    const context = options.browserContext || await browser.createIncognitoBrowserContext();
+    // Ritik - If without logging in
+    // const context = options.browserContext || await browser.createIncognitoBrowserContext();
+
+    // Ritik - Logging in
+    const context = options.browserContext || await browser.defaultBrowserContext();
 
     // await new Promise(r => setTimeout(r, 5000));
 
@@ -485,12 +493,16 @@ module.exports = async (url, options) => {
     } finally {
         // only close the browser if it was created here and not debugging
         // if (browser && !VISUAL_DEBUG) {
-        if (browser) {
-            log('Closing the context and the browser');
-            await context.close();
-            log('Context closed');
-            await browser.close();
-            log('Browser process closed');
+        try{
+            if (browser) {
+                log('Closing the context and the browser');
+                await context.close();
+                log('Context closed');
+                await browser.close();
+                log('Browser process closed');
+            }
+        } catch(e){
+            log(chalk.red('While closing browser -- '), e.message);
         }
     }
 
