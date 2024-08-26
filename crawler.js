@@ -62,7 +62,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
                 '--user-data-dir=./saved_session/',
-                //'--display='+xvfb._display,
+                '--display='+xvfb._display,
             ]
         };
     } else {
@@ -76,7 +76,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
                 `--load-extension=./extn_src/${extension}_v2`,
                 // '--user-data-dir=/tmp/saved_session/',
-                // '--display='+xvfb._display,
+                '--display='+xvfb._display,
 
             ]
         };
