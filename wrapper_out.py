@@ -13,6 +13,24 @@ containers = ["accads_control", "accads_adblock"]
 # Build Docker images (assuming Dockerfiles are in the current directory)
 subprocess.run(["docker", "build", "-t", "accads", "-f", "Dockerfile", "."])
 
+# Function to create a directory with 777 permission
+def create_directory(dir_name):
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+        os.chmod(dir_name, 0o777)
+        print(f"Created {dir_name} with 777 permissions.")
+    else:
+        print(f"{dir_name} already exists.")
+
+def create_data_directories():
+    # Directories to be created
+    dir1 = "./control"
+    dir2 = "./adblock"
+
+    # Create both directories
+    create_directory(dir1)
+    create_directory(dir2)
+
 def check_and_start_container(container_name, image_name, extn):
     """Check if a container is running and start it if it's not."""
     result = subprocess.run(["docker", "ps", "-q", "-f", f"name={container_name}"], capture_output=True, text=True)
@@ -31,6 +49,7 @@ def handle_container(container_name, image_name, url, extn):
     feed_url_to_container(container_name, url, extn)
     time.sleep(1)  # Add delay if necessary
 
+create_data_directories()
 for url in urls:
     # Create multiprocessing processes
     processes = []
