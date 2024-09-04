@@ -137,7 +137,7 @@ class AdCollector extends BaseCollector {
         }
         url_key = url_key.split('/')[0]
 
-        const outPath = `${path.join(this._outputPath, ADSHOTS_SUBDIR, `${url_key}.json`)}`;
+        const outPath = `${path.join(this._outputPath, ADDATA_SUBDIR, `${url_key}.json`)}`;
 
         // if (!fs.existsSync('./data/adData')){
         //     fs.mkdirSync('./data/adData');

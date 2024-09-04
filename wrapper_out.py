@@ -4,7 +4,7 @@ import os
 import time
 
 # List of URLs to be crawled
-urls = open('websites.txt', 'r').read().splitlines()
+urls = open('websites1.txt', 'r').read().splitlines()
 
 # Docker container names
 containers = ["accads_control", "accads_adblock"]
