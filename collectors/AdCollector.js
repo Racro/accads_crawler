@@ -608,13 +608,13 @@ class AdCollector extends BaseCollector {
         await scrollPageToBottom(page, {
             size: 500 + this.getRandomUpTo(100),
             delay: 500 + this.getRandomUpTo(100),
-            stepsLimit: 10
+            stepsLimit: 20
         });
         await page.waitForTimeout(1000);
         await scrollPageToTop(page, {
             size: 500 + this.getRandomUpTo(100),
             delay: 150 + this.getRandomUpTo(100),
-            stepsLimit: 10
+            stepsLimit: 20
         });
     }
 

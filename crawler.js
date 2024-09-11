@@ -24,7 +24,7 @@ var xvfb = new Xvfb({
     reuse: true,
     xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
 });
-xvfb.startSync((err)=>{if (err) console.error(err)});
+// xvfb.startSync((err)=>{if (err) console.error(err)});
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -61,8 +61,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
-                '--user-data-dir=./saved_session/',
-                '--display='+xvfb._display,
+                // '--user-data-dir=./saved_session/',
+                // '--display='+xvfb._display,
             ]
         };
     } else {
@@ -76,7 +76,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
                 `--load-extension=./extn_src/${extension}_v2`,
                 // '--user-data-dir=/tmp/saved_session/',
-                '--display='+xvfb._display,
+                // '--display='+xvfb._display,
 
             ]
         };
@@ -104,8 +104,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
     //     args.executablePath = executablePath;
     // }
 
-    // args.executablePath = '/tmp/chrome-linux/chrome';
-    args.executablePath = '/tmp/chrome_97/chrome';
+    args.executablePath = '/tmp/chrome-linux/chrome';
+    // args.executablePath = '/tmp/chrome_97/chrome';
     // args.executablePath = '/usr/bin/google-chrome';
     // args.userDataDir = './saved_session/google_login';
 
@@ -286,7 +286,7 @@ async function getSiteData(context, url, {
     page.on('error', e => log(chalk.red(e.message)));
 
     // Ritik - timeput for extension to load in incognito mode/context
-    await new Promise(r => setTimeout(r, 5000));
+    // await new Promise(r => setTimeout(r, 5000));
 
     let timeout = false;
     try {
@@ -376,7 +376,7 @@ async function getSiteData(context, url, {
     //     await page.close();
     // }
 
-    await new Promise(r => setTimeout(r, 100000));
+    // await new Promise(r => setTimeout(r, 100000));
     await page.close();
 
     return {
@@ -496,8 +496,8 @@ module.exports = async (url, options) => {
         try{
             if (browser) {
                 log('Closing the context and the browser');
-                await context.close();
-                log('Context closed');
+                // await context.close();
+                // log('Context closed');
                 await browser.close();
                 log('Browser process closed');
             }
@@ -506,7 +506,7 @@ module.exports = async (url, options) => {
         }
     }
 
-    await xvfb.stopSync();
+    // await xvfb.stopSync();
     return data;
 };
 
