@@ -24,7 +24,7 @@ var xvfb = new Xvfb({
     reuse: true,
     xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
 });
-xvfb.startSync((err)=>{if (err) console.error(err)});
+// xvfb.startSync((err)=>{if (err) console.error(err)});
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -62,7 +62,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
                 // '--user-data-dir=./saved_session/',
-                '--display='+xvfb._display,
+                // '--display='+xvfb._display,
             ]
         };
     } else {
@@ -76,7 +76,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
                 `--load-extension=./extn_src/${extension}_v2`,
                 // '--user-data-dir=/tmp/saved_session/',
-                '--display='+xvfb._display,
+                // '--display='+xvfb._display,
 
             ]
         };
@@ -236,8 +236,12 @@ async function getSiteData(context, url, {
     // console.log(`REACHED HERE`);
     // await new Promise(r => setTimeout(r, 5000));
     // Create a new page in a pristine context.
-    const page = await context.newPage();
+    // New page in incognito
+    // const page = await context.newPage();
 
+    // For logged in crawl - opens page in about:blank tab
+    const [page] = await context.pages()
+    
     // optional function that should be run on every page (and subframe) in the browser context
     if (runInEveryFrame) {
         page.evaluateOnNewDocument(runInEveryFrame);
@@ -429,12 +433,13 @@ module.exports = async (url, options) => {
             await extensionsPage.screenshot({
                 path: '/adblock/extension_verification.jpg'
             });
-
-            await extensionsPage.evaluate(`
-            chrome.developerPrivate.getExtensionsInfo().then((extensions) => {
-                extensions.map((extension) => chrome.developerPrivate.updateExtensionConfiguration({extensionId: extension.id, incognitoAccess: true}));
-            });
-            `);
+            
+            // Only for unlogged crawls
+            // await extensionsPage.evaluate(`
+            // chrome.developerPrivate.getExtensionsInfo().then((extensions) => {
+            //     extensions.map((extension) => chrome.developerPrivate.updateExtensionConfiguration({extensionId: extension.id, incognitoAccess: true}));
+            // });
+            // `);
 
         } catch (e) {
             console.error('\n00000000000000\n');
