@@ -12,7 +12,7 @@ os.chdir('./accads_crawler')
 
 start_time = time.time()
 
-cmd = f'npm run crawl -- -u {args.url} -o /{args.extn}/ -v -f -d "requests,cookies,ads,screenshots,cmps,videos" --reporters "cli,file" -l /{args.extn}/ --autoconsent-action "optIn" --extn {args.extn}'
+cmd = f'npm run crawl -- -u {args.url} -o ./{args.extn}/ -v -f -d "requests,cookies,ads,screenshots,cmps,videos" --reporters "cli,file" -l ./{args.extn}/ --autoconsent-action "optIn" --extn {args.extn}'
 
 process = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

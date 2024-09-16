@@ -6,10 +6,13 @@ import argparse
 
 # setup the chrome environment for vm
 def setup():
+    os.system('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash')
+    os.system('nvm install 18')
+
     if not os.path.exists('/tmp/chrome-linux'):
         os.system("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip")
 
-        os.system('sudo apt install npm@9.6.5')
+        # os.system('sudo apt install npm@9.6.5')
 
 # Function to create a directory with 777 permission
 def create_directory(dir_name):
@@ -50,9 +53,9 @@ def handle_container(container_name, image_name, url, extn):
     time.sleep(1)  # Add delay if necessary
 
 # List of URLs to be crawled
-urls = open('websites1.txt', 'r').read().splitlines()
+urls = open('website1.txt', 'r').read().splitlines()
 docker = 0
-vm = 0
+vm = 1
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
 parser.add_argument('--extn', type=str)
 args = parser.parse_args()
