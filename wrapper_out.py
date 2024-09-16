@@ -4,6 +4,13 @@ import os
 import time
 import argparse
 
+# setup the chrome environment for vm
+def setup():
+    if not os.path.exists('/tmp/chrome-linux'):
+        os.system("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip")
+
+        os.system('sudo apt install npm@9.6.5')
+
 # Function to create a directory with 777 permission
 def create_directory(dir_name):
     if not os.path.exists(dir_name):
@@ -85,6 +92,7 @@ if docker:
         time.sleep(2)
 
 elif vm:
+    setup()
     for url in urls:
         try:
             # Execute a command with a timeout of 5 seconds
