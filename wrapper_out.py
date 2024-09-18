@@ -4,14 +4,30 @@ import os
 import time
 import argparse
 
+def check_node_installed():
+    try:
+        # Run the 'node -v' command to check Node.js version
+        result = subprocess.run(['node', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            print(f"Node.js is installed. Version: {result.stdout.strip()}")
+            return 1
+        else:
+            print("Node.js is not installed.")
+            return 0
+    except FileNotFoundError:
+        print("Node.js is not installed.")
+        return 0
+
 # setup the chrome environment for vm
 def setup():
-    os.system('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash')
-    os.system('nvm install 18')
+    if not check_node_installed():
+        os.system('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash')
+        os.system('nvm install 18.16')
 
     if not os.path.exists('/tmp/chrome-linux'):
-        os.system("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip")
-
+        os.system("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/")
+        
+        os.system('npm i')
         # os.system('sudo apt install npm@9.6.5')
 
 # Function to create a directory with 777 permission
