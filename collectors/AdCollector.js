@@ -638,6 +638,7 @@ class AdCollector extends BaseCollector {
         var scrapeResultsAll = {'nDetectedAds': 0, 'nAdsScraped': 0, 'nSmallAds': 0, 'nEmptyAds': 0,
             'nRemovedAds': 0,'nAdDisclosureMatched': 0, 'nAdDisclosureUnmatched': 0, 'nClickedAdChoices': 0};
         var urls = [];
+        var all_adhandles = 0;
         var page_url = page.url();
 
         for (let frame = 0; frame < frames.length; frame++){ 
@@ -655,11 +656,17 @@ class AdCollector extends BaseCollector {
             this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
             
             // Scrape the ads
+            // adDetails.push({
+            //     ...ad.attrs,
+            //     clickedAdChoiceLink,
+            //     adLinksAndImages,
+            // });
             const {adDetails, scrapeResults} = await this.scrapeAds(frames[frame], page);
 
             const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
             const adHandles = this._adsWHandles.map(ad => ad.handle);
             
+            // populating urls
             for (const adURL of adURLs) {
                 try {
                     urls.push(adURL);
@@ -668,8 +675,9 @@ class AdCollector extends BaseCollector {
                 }
             }
 
-            this._adData['urls'] = urls;
-            this._adData['handles'] = adHandles.length;
+            // populating all_adhandles
+            all_adhandles = all_adhandles + adHandles.length;
+
             // console.error('3333333333\n');
             // console.error(adHandles);
             await this.saveAdData(page_url);
@@ -704,6 +712,10 @@ class AdCollector extends BaseCollector {
                 scrapeResultsAll[key] += scrapeResults[key];
             });
         }
+
+        // collating all collected together
+        this._adData['urls'] = urls;
+        this._adData['handles'] = all_adhandles;
     
         // // run the ad detection script
         // this._adsWHandles = await this.getAllAdAttrsWHandles(page, this._log);

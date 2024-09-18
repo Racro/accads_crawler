@@ -30,6 +30,10 @@ def setup():
         os.system('npm i')
         # os.system('sudo apt install npm@9.6.5')
 
+# copy the session
+def copy_session():
+    os.system('cp -r saved_session temp_session')
+
 # Function to create a directory with 777 permission
 def create_directory(dir_name):
     if not os.path.exists(dir_name):
@@ -114,13 +118,22 @@ elif vm:
     setup()
     for url in urls:
         try:
-            # Execute a command with a timeout of 5 seconds
-            result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], timeout=220)
-            print("Command completed:", result)
+            tries = 3
+            while tries > 0:
+                copy_session()
+                if os.path.exists('./temp_session'):
+                    # Execute a command with a timeout of 5 seconds
+                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], timeout=220)
+                    print("Command completed:", result)
+                    break
+                else:
+                    tries -= 1
+
         except subprocess.TimeoutExpired:
             print("Command timed out and was terminated.")
 
-        os.system(f'python3 wrapper_in.py --url {url} --extn {args.extn}')
+        time.sleep(2)
+        os.system('rm -rf temp_session')
 else:
     print('PLEASE SPECIFY EITHER OF DOCKER OR VM')
 

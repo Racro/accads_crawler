@@ -431,7 +431,7 @@ module.exports = async (url, options) => {
             const extensionsPage = await browser.newPage();
             await extensionsPage.goto( 'chrome://extensions/' );
             await extensionsPage.screenshot({
-                path: '/adblock/extension_verification.jpg'
+                path: './adblock/extension_verification.jpg'
             });
             
             // Only for unlogged crawls
