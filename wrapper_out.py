@@ -21,14 +21,19 @@ def check_node_installed():
 # setup the chrome environment for vm
 def setup():
     if not check_node_installed():
-        os.system('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash')
-        os.system('nvm install 18.16')
+        subprocess.run('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash', shell=True)
+        subprocess.run('source ~/.bashrc', shell=True)
+        subprocess.run('nvm install 18.16', shell=True)
 
     if not os.path.exists('/tmp/chrome-linux'):
-        os.system("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/")
+        subprocess.run("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/", shell=True)
         
-        os.system('npm i')
+        subprocess.run('npm i', shell=True)
         # os.system('sudo apt install npm@9.6.5')
+
+# copy the session
+def copy_session():
+    subprocess.run('cp -r saved_session temp_session', shell=True)
 
 # Function to create a directory with 777 permission
 def create_directory(dir_name):
@@ -39,7 +44,7 @@ def create_directory(dir_name):
     else:
         print(f"{dir_name} already exists.")
         print('CLEANING THE DIRECTORY OF ANY FILES')
-        os.system(f'rm -rf ./{dir_name}/*')
+        subprocess.run(f'rm -rf ./{dir_name}/*', shell=True)
 
 def create_data_directories():
     # Directories to be created
@@ -61,7 +66,7 @@ def check_and_start_container(container_name, image_name, extn):
 
 def feed_url_to_container(container_name, url, extn):
     command = f'docker exec -i {container_name} python3 wrapper_in.py --url={url} --extn={extn}'
-    os.system(command)
+    subprocess.run(command, shell=True)
 
 def handle_container(container_name, image_name, url, extn):
     check_and_start_container(container_name, image_name, extn)
@@ -114,13 +119,22 @@ elif vm:
     setup()
     for url in urls:
         try:
-            # Execute a command with a timeout of 5 seconds
-            result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], timeout=220)
-            print("Command completed:", result)
+            tries = 3
+            while tries > 0:
+                copy_session()
+                if os.path.exists('./temp_session'):
+                    # Execute a command with a timeout of 5 seconds
+                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], timeout=220)
+                    print("Command completed:", result)
+                    break
+                else:
+                    tries -= 1
+
         except subprocess.TimeoutExpired:
             print("Command timed out and was terminated.")
 
-        os.system(f'python3 wrapper_in.py --url {url} --extn {args.extn}')
+        time.sleep(2)
+        subprocess.run('rm -rf temp_session', shell=True)
 else:
     print('PLEASE SPECIFY EITHER OF DOCKER OR VM')
 
