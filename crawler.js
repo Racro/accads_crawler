@@ -61,7 +61,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
-                // '--user-data-dir=./saved_session/',
+                '--user-data-dir=./saved_session/',
+                // '--user-data-dir=./temp_session/',
                 // '--display='+xvfb._display,
             ]
         };
@@ -74,8 +75,9 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
                 `--disable-extensions-except=./extn_src/${extension}_v2`,
-                `--load-extension=./extn_src/${extension}_v2`,
-                // '--user-data-dir=/tmp/saved_session/',
+                `--load-extension=./extn_src/${extension}_v3`,
+                // '--user-data-dir=./saved_session/',
+                '--user-data-dir=./temp_session/',
                 // '--display='+xvfb._display,
 
             ]
@@ -431,7 +433,7 @@ module.exports = async (url, options) => {
             const extensionsPage = await browser.newPage();
             await extensionsPage.goto( 'chrome://extensions/' );
             await extensionsPage.screenshot({
-                path: '/adblock/extension_verification.jpg'
+                path: './adblock/extension_verification.jpg'
             });
             
             // Only for unlogged crawls
