@@ -574,7 +574,7 @@ class AdCollector extends BaseCollector {
         log("Will click on ads");
 
         // Ritik
-        this._page = browser.pages()[0]
+        // this._page = browser.pages()[0]
         
         const visitedHosts = new Set();
         for (const adURL of adLinksWHandles.adURLs) {
@@ -588,15 +588,16 @@ class AdCollector extends BaseCollector {
                 log(`Will load the ad landing page: ${adURL}...`);
 
                 npage = await browser.newPage();
+                await npage.setDefaultTimeout(5000);
                 await npage.setViewport({width: 1920, height: 1080});
                 // await page.goto(adURL, {waitUntil: 'networkidle2'});
-                await npage.goto(adURL, {waitUntil:"domcontentloaded"});
-                npage.waitForNetworkIdle({ idleTime: 1000 })
+                await npage.goto(adURL, {waitUntil:"networkidle2"});
+                // npage.waitForNetworkIdle({ idleTime: 1000 })
 
                 // this._clickedAd = true;
                 this._visitedAdUrls.push(adURL);
                 this._adData['urls'].push([npage.url(), adURL, null]);
-                // console.error(`visiting_url: ${adURL} - ${page.url()}`)
+                console.error(`visiting_url: ${adURL} - ${npage.url()}`)
                 // add host to visited hosts
                 visitedHosts.add(adHostname);
                 npage.close();
@@ -613,32 +614,66 @@ class AdCollector extends BaseCollector {
             for (const adHandle of adLinksWHandles.adHandles) {
                 try {
                     // Ritik
-                    let newTab = null;
-                    browser.on('targetcreated', async (target) => {
-                        if (target.type() === 'page') {
-                        newTab = await target.page();
-                        console.log('New tab opened:', await newTab.url());
+                    const el_onclick = await page.evaluate(el => {
+                        try{
+                            const onclick = el.getAttribute('src');
+                            if (onclick) {
+                                return onclick; // This might contain JavaScript with the URL
+                            }
+                        } catch (error){
+                            console.error(`error in onclick - ${error}`);
+                            return null;
                         }
                     });
 
-                    const el_onclick = await adHandle.evaluate(el => {
-                        const onclick = el.getAttribute('onclick');
-                        if (onclick) {
-                            return onclick; // This might contain JavaScript with the URL
-                        }
-                        return null;
-                    });
+                    // let newTab = null;
+                    // browser.on('targetcreated', async (target) => {
+                    //     if (target.type() === 'page') {
+                    //     newTab = await target.page();
+                    //     console.log('New tab opened:', await newTab.url());
+                    //     }
+                    // });
 
-                    log("Will click on the ad:...");
-                    await adHandle.click();
+                    // Listen for new tabs or windows
+                    log(`Will click on the ad:... ${adHandle.type()} -- ${page.type()}"`);
+
+                    // let newTab = null;
+                    // const [popup] = await Promise.all([
+                    //     new Promise((resolve) => browser.once('targetcreated', resolve)), // Wait for a new target (tab)
+                    //     adHandle.click() // Click on the element
+                    // ]);
+
+                    // Check if the target is a new page (new tab or window)
+                    // if (popup) {
+                    //     newTab = await popup.page(); // Get the page from the newly created target
+                    //     await newTab.waitForTimeout(1000); // Wait for some time if needed for the new tab to load
+                    //     console.log('New tab opened:', await newTab.url());
+                    // }
+
+
+                    // await adHandle.click();
 
                     // Ritik
                     // If a new tab was opened, close it
-                    if (newTab) {
-                        this._adData['urls'].push([newTab.url(), el_onclick, adHandle]);
-                        await newTab.close();
-                        console.log('New tab closed');
-                    }
+                    
+                    // if (newTab) {
+                    //     this._adData['urls'].push([newTab.url(), el_onclick, adHandle['attrs']['screenshot']]);
+                    //     await newTab.close();
+                    //     console.log('New tab closed');
+                    // }
+                    
+                    // Wait for the final navigation (redirects) to complete
+                    // if (newTab) {
+                    //     await newTab.waitForNavigation({ waitUntil: 'networkidle0' });
+                    //     const finalLandingPageUrl = newTab.url(); // Capture final landing page URL
+                    //     console.log('Final landing page URL (U\'):', finalLandingPageUrl);
+                    //     await newTab.close(); // Optionally close the new tab
+                    // } else {
+                    //     await page.waitForNavigation({ waitUntil: 'networkidle0' });
+                    //     const finalLandingPageUrl = page.url(); // Final landing page URL in the same tab
+                    //     console.log('Final landing page URL (U\'):', finalLandingPageUrl);
+                    // }
+
 
                     await page.waitForTimeout(2000);
                     await pageUtils.bringMainPageFront(browser);
