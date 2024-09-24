@@ -122,10 +122,14 @@ elif vm:
             tries = 3
             while tries > 0:
                 copy_session()
+                time.sleep(2)
+
                 if os.path.exists('./temp_session'):
                     # Execute a command with a timeout of 5 seconds
-                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], timeout=220)
+                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], stdout = subprocess.PIPE, stderr = subprocess.PIPE, timeout=220)
                     print("Command completed:", result)
+                    print("stdout:", stdout)
+                    print("stderr:", stderr)
                     break
                 else:
                     tries -= 1
@@ -134,7 +138,9 @@ elif vm:
             print("Command timed out and was terminated.")
 
         time.sleep(2)
-        subprocess.run('rm -rf temp_session', shell=True)
+
+        while os.path.exists('./temp_session'):
+            subprocess.run('rm -rf temp_session', shell=True)
 else:
     print('PLEASE SPECIFY EITHER OF DOCKER OR VM')
 

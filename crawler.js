@@ -61,6 +61,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                 '--disable-web-security',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--start-maximized',
+                '--user-data-dir=./temp_session/',
                 // '--user-data-dir=./saved_session/',
                 // '--display='+xvfb._display,
             ]

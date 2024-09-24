@@ -11,7 +11,7 @@ const {scrollPageToBottom, scrollPageToTop} = require('puppeteer-autoscroll-down
 const MAX_ADS_SCRAPED_PER_PAGE = 10;
 const MIN_PX_TO_TAKE_SS = 30;
 const ENABLE_SCROLLING = true;
-const ENABLE_CLICKING_TO_ADS = false;
+const ENABLE_CLICKING_TO_ADS = true;
 const AD_DISC_LINKS_TO_COLLECT = ["See more ads by this advertiser", "Report this ad"];
 const EXCLUDED_ADSHOTS_SUBDIR = 'excluded_adshots';
 const ADSHOTS_SUBDIR = 'adshots';
@@ -53,7 +53,9 @@ class AdCollector extends BaseCollector {
         this._adChoicesLinkAttrs = [];
         this._timeStampBeforeInteraction = 0;
         // Ritik
-        this._adData = {'urls': null, 'handles': null, 'info': []};
+        this._adData = {'urls': [], 'landing_pages': [], 'handles': [], 'info': []};
+        this._page = null;
+
         // create a folder for ad images
         fs.mkdirSync(path.join(outputPath, 'ad_imgs'), {recursive: true});
         fs.mkdirSync(path.join(outputPath, 'ad_videos'), {recursive: true});
@@ -248,6 +250,7 @@ class AdCollector extends BaseCollector {
                 }
             }
             await pageUtils.bringMainPageFront(context);
+
         } catch (error) {
             this._log(`AdCollector: Error while scraping the ad (disclosure) page: ${error}`);
         }
@@ -486,6 +489,7 @@ class AdCollector extends BaseCollector {
             log(`Will scrape ad: ${this.printAdAttrs(ad.attrs)}`);
 
             // Ritik
+            this._adData['handles'].push(ad);
             this._adData['info'].push(ad.attrs);
 
             if(ENABLE_SCROLLING) {
@@ -530,10 +534,13 @@ class AdCollector extends BaseCollector {
             await this.addBorderToAd(ad.handle);
 
             log('Will detect and click an ad choice icon');
-            const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
+
+            // Ritik
+            const clickedAdChoiceLink = false;
+            // const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
             ad.attrs.clickedAdChoiceLink = clickedAdChoiceLink;
 
-            this.removeUnneededAttrs(adLinksAndImages);
+            // this.removeUnneededAttrs(adLinksAndImages);
             adDetails.push({
                 ...ad.attrs,
                 clickedAdChoiceLink,
@@ -565,8 +572,13 @@ class AdCollector extends BaseCollector {
         log("Will wait for 5 seconds before clicking on ads");
         page.waitForTimeout(5000);
         log("Will click on ads");
+
+        // Ritik
+        this._page = browser.pages()[0]
+        
         const visitedHosts = new Set();
         for (const adURL of adLinksWHandles.adURLs) {
+            var npage = null;
             try {
                 const adHostname = new URL(adURL).hostname;
                 if (visitedHosts.has(adHostname)) {
@@ -574,31 +586,72 @@ class AdCollector extends BaseCollector {
                     continue;
                 }
                 log(`Will load the ad landing page: ${adURL}...`);
-                const page = await browser.newPage();
-                await page.setViewport({width: 1920, height: 1080});
-                await page.goto(adURL, {waitUntil: 'networkidle2'});
-                this._clickedAd = true;
+
+                npage = await browser.newPage();
+                await npage.setViewport({width: 1920, height: 1080});
+                // await page.goto(adURL, {waitUntil: 'networkidle2'});
+                await npage.goto(adURL, {waitUntil:"domcontentloaded"});
+                npage.waitForNetworkIdle({ idleTime: 1000 })
+
+                // this._clickedAd = true;
                 this._visitedAdUrls.push(adURL);
+                this._adData['urls'].push([npage.url(), adURL, null]);
+                // console.error(`visiting_url: ${adURL} - ${page.url()}`)
                 // add host to visited hosts
                 visitedHosts.add(adHostname);
+                npage.close();
+                await pageUtils.bringMainPageFront(browser);
             } catch (error) {
                 log(`❌ Scraper: Error while clicking on ad: ${error}`);
+                npage.close();
+                await pageUtils.bringMainPageFront(browser);
             }
         }
 
-        const ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES = false;
+        const ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES = true;
         if (ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES) {
             for (const adHandle of adLinksWHandles.adHandles) {
                 try {
+                    // Ritik
+                    let newTab = null;
+                    browser.on('targetcreated', async (target) => {
+                        if (target.type() === 'page') {
+                        newTab = await target.page();
+                        console.log('New tab opened:', await newTab.url());
+                        }
+                    });
+
+                    const el_onclick = await adHandle.evaluate(el => {
+                        const onclick = el.getAttribute('onclick');
+                        if (onclick) {
+                            return onclick; // This might contain JavaScript with the URL
+                        }
+                        return null;
+                    });
+
                     log("Will click on the ad:...");
                     await adHandle.click();
+
+                    // Ritik
+                    // If a new tab was opened, close it
+                    if (newTab) {
+                        this._adData['urls'].push([newTab.url(), el_onclick, adHandle]);
+                        await newTab.close();
+                        console.log('New tab closed');
+                    }
+
+                    await page.waitForTimeout(2000);
+                    await pageUtils.bringMainPageFront(browser);
+
                 } catch (error) {
                     log(`❌ Scraper: Error while clicking on ad: ${error}`);
                 }
             }
         }
         log('Will wait for 5 second after clicking ads');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
+        await pageUtils.bringMainPageFront(browser);
+        // await page.waitForTimeout(5000);
     }
 
     /**
@@ -632,7 +685,9 @@ class AdCollector extends BaseCollector {
         await this.scrollToBottomAndUp(page);
         await this.takeScreenshot(page, 'after_scroll');
 
+        // Ritik
         var frames = page.frames();
+        frames.unshift(page);
 
         var adDetailsAll = [];
         var scrapeResultsAll = {'nDetectedAds': 0, 'nAdsScraped': 0, 'nSmallAds': 0, 'nEmptyAds': 0,
@@ -640,6 +695,7 @@ class AdCollector extends BaseCollector {
         var urls = [];
         var all_adhandles = 0;
         var page_url = page.url();
+
 
         for (let frame = 0; frame < frames.length; frame++){ 
             // run the ad detection script
@@ -667,16 +723,19 @@ class AdCollector extends BaseCollector {
             const adHandles = this._adsWHandles.map(ad => ad.handle);
             
             // populating urls
-            for (const adURL of adURLs) {
-                try {
-                    urls.push(adURL);
-                } catch (error) {
-                    this._log(`❌ Scraper: Error while saving adData: ${error}`);
-                }
-            }
+            // for (const adURL of adURLs) {
+            //     try {
+            //         // console.error(`\nadURL: ${adURLs}\n`);
+            //         this._adData['urls'].push(adURL);
+            //         // urls.push(adURL);
+            //     } catch (error) {
+            //         this._log(`❌ Scraper: Error while saving adData: ${error}`);
+            //     }
+            // }
 
             // populating all_adhandles
-            all_adhandles = all_adhandles + adHandles.length;
+            // this._adData['handles'] = this._adData['handles'] + adHandles.length;
+            // all_adhandles = all_adhandles + adHandles.length;
 
             // console.error('3333333333\n');
             // console.error(adHandles);
@@ -714,8 +773,8 @@ class AdCollector extends BaseCollector {
         }
 
         // collating all collected together
-        this._adData['urls'] = urls;
-        this._adData['handles'] = all_adhandles;
+        // this._adData['urls'] = urls;
+        // this._adData['handles'] = all_adhandles;
     
         // // run the ad detection script
         // this._adsWHandles = await this.getAllAdAttrsWHandles(page, this._log);
