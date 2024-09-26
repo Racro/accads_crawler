@@ -536,14 +536,14 @@ class AdCollector extends BaseCollector {
             log('Will detect and click an ad choice icon');
 
             // Ritik
-            const clickedAdChoiceLink = false;
-            // const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
-            ad.attrs.clickedAdChoiceLink = clickedAdChoiceLink;
+            // const clickedAdChoiceLink = false;
+            // // const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
+            // ad.attrs.clickedAdChoiceLink = clickedAdChoiceLink;
 
             // this.removeUnneededAttrs(adLinksAndImages);
             adDetails.push({
                 ...ad.attrs,
-                clickedAdChoiceLink,
+                // clickedAdChoiceLink,
                 adLinksAndImages,
             });
             if (adDetails.length >= MAX_ADS_SCRAPED_PER_PAGE) {
@@ -600,11 +600,11 @@ class AdCollector extends BaseCollector {
                 console.error(`visiting_url: ${adURL} - ${npage.url()}`)
                 // add host to visited hosts
                 visitedHosts.add(adHostname);
-                npage.close();
+                // npage.close();
                 await pageUtils.bringMainPageFront(browser);
             } catch (error) {
                 log(`❌ Scraper: Error while clicking on ad: ${error}`);
-                npage.close();
+                // npage.close();
                 await pageUtils.bringMainPageFront(browser);
             }
         }
@@ -612,19 +612,29 @@ class AdCollector extends BaseCollector {
         const ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES = true;
         if (ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES) {
             for (const adHandle of adLinksWHandles.adHandles) {
-                try {
+                // try {
                     // Ritik
-                    const el_onclick = await page.evaluate(el => {
-                        try{
+                    var el_onclick = null;
+                    try{
+                        el_onclick = await adHandle.evaluate(el => {
                             const onclick = el.getAttribute('src');
                             if (onclick) {
                                 return onclick; // This might contain JavaScript with the URL
+                            } else {
+                                return null;
                             }
-                        } catch (error){
-                            console.error(`error in onclick - ${error}`);
-                            return null;
-                        }
-                    });
+
+                        });
+                    } catch (error){
+                        console.error(`error in onclick - ${error}`);
+                        return null;
+                    };
+                    
+                    const adLink = await adHandle.$eval('a', (a) => a.href).catch(() => null);
+
+                    // adHandle.click();
+
+                    console.log(`Please look at onclick - ${adLink}`);
 
                     // let newTab = null;
                     // browser.on('targetcreated', async (target) => {
@@ -678,9 +688,9 @@ class AdCollector extends BaseCollector {
                     await page.waitForTimeout(2000);
                     await pageUtils.bringMainPageFront(browser);
 
-                } catch (error) {
-                    log(`❌ Scraper: Error while clicking on ad: ${error}`);
-                }
+                // } catch (error) {
+                //     log(`❌ Scraper: Error while clicking on ad: ${error}`);
+                // }
             }
         }
         log('Will wait for 5 second after clicking ads');
@@ -774,7 +784,6 @@ class AdCollector extends BaseCollector {
 
             // console.error('3333333333\n');
             // console.error(adHandles);
-            await this.saveAdData(page_url);
 
             // RIGHT NOW CLICKING IS ENABLED
             if(ENABLE_CLICKING_TO_ADS) {
@@ -806,6 +815,8 @@ class AdCollector extends BaseCollector {
                 scrapeResultsAll[key] += scrapeResults[key];
             });
         }
+
+        await this.saveAdData(page_url);
 
         // collating all collected together
         // this._adData['urls'] = urls;
