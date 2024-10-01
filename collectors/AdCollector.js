@@ -139,7 +139,7 @@ class AdCollector extends BaseCollector {
         }
         url_key = url_key.split('/')[0]
 
-        const outPath = `${path.join(this._outputPath, ADDATA_SUBDIR, `${url_key}.json`)}`;
+        const outPath = `${path.join(this._outputPath, ADDATA_SUBDIR, `${url_key}_${this._urlHash}.json`)}`;
 
         // if (!fs.existsSync('./data/adData')){
         //     fs.mkdirSync('./data/adData');
@@ -150,6 +150,21 @@ class AdCollector extends BaseCollector {
             if (err) throw err;
             log('complete');
         });
+    }
+
+    /**
+     * @param {any} browser
+    */
+    async check_login(browser) {
+        const newpage = await browser.newPage();
+
+        // Navigate to the desired URL
+        await newpage.goto('https://www.google.com', { waituntil: 'network0' });
+        await new Promise(r => setTimeout(r, 2000));
+
+        // Take a screenshot and save it to a file
+        await newpage.screenshot({ path: `${path.join('login', `screenshot_${this._urlHash}.png`)}`});
+
     }
 
     /**
@@ -785,6 +800,10 @@ class AdCollector extends BaseCollector {
         var urls = [];
         var all_adhandles = 0;
         var page_url = page.url();
+
+        // Screenshot check for login
+        await this.check_login(options.context);
+        await pageUtils.bringMainPageFront(options.context);
         
         // var adURLs = null;
         // var adHandles = null;
@@ -822,7 +841,7 @@ class AdCollector extends BaseCollector {
         const linksWithSS = pageUtils.getAdLinksWithSS(adDetails);
         
         this._adData = linksWithSS;
-        this.saveAdData(page_url);
+        await this.saveAdData(page_url);
         // we capture the ad disclosure new tabs in the background
         // we should wait to avoid missing slow disclosure pages
         this._log('Waiting for 5 seconds after interacting with ads');
