@@ -53,7 +53,7 @@ class AdCollector extends BaseCollector {
         this._adChoicesLinkAttrs = [];
         this._timeStampBeforeInteraction = 0;
         // Ritik
-        this._adData = {'urls': [], 'landing_pages': [], 'handles': [], 'info': []};
+        this._adData = {'info': []};
         this._page = null;
 
         // create a folder for ad images
@@ -489,7 +489,7 @@ class AdCollector extends BaseCollector {
             log(`Will scrape ad: ${this.printAdAttrs(ad.attrs)}`);
 
             // Ritik
-            this._adData['handles'].push(ad);
+            // this._adData['handles'].push(ad);
             this._adData['info'].push(ad.attrs);
 
             if(ENABLE_SCROLLING) {
@@ -533,14 +533,14 @@ class AdCollector extends BaseCollector {
             ad.attrs.screenshot = ssName;
             await this.addBorderToAd(ad.handle);
 
-            log('Will detect and click an ad choice icon');
+            // log('Will detect and click an ad choice icon');
 
             // Ritik
             // const clickedAdChoiceLink = false;
             // // const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
             // ad.attrs.clickedAdChoiceLink = clickedAdChoiceLink;
 
-            // this.removeUnneededAttrs(adLinksAndImages);
+            this.removeUnneededAttrs(adLinksAndImages);
             adDetails.push({
                 ...ad.attrs,
                 // clickedAdChoiceLink,
@@ -563,12 +563,63 @@ class AdCollector extends BaseCollector {
     }
 
     /**
+     * @param {any} elementHandle
+     * @param {any} page
+     */
+    async findHrefFromHandle(elementHandle, page) {
+        try {
+            // Check if there's an <a> tag as a descendant (child or grandchild)
+            const childHref = await elementHandle.evaluate(el => {
+                const childLink = el.querySelector('a');
+                return childLink ? childLink.href : null;
+            });
+      
+            if (childHref) {
+                console.log('Found <a> tag as a child with href:', childHref);
+                return childHref;
+            }
+      
+            // Check if the element itself is an <a> tag or its parent is an <a> tag
+            const parentHref = await elementHandle.evaluate(el => {
+                let currentElement = el;
+                while (currentElement && currentElement.tagName.toLowerCase() !== 'html') {
+                    if (currentElement.tagName.toLowerCase() === 'a' && currentElement.href) {
+                        return currentElement.href;
+                    }
+                    currentElement = currentElement.parentElement;
+                }
+                return null; // No parent <a> tag with href found
+            });
+      
+            if (parentHref) {
+                console.log('Found <a> tag as a parent with href:', parentHref);
+                return parentHref;
+            }
+      
+            console.log('No <a> tag found as child or parent');
+            return null;
+        } catch (error) {
+            console.error('Error while finding href:', error);
+            return null;
+        }
+    };
+      
+
+    /**
      * @param {{adURLs: any[];adHandles: any[];}} adLinksWHandles
      * @param {any} log
      * @param {any} page
      * @param {any} browser
      */
     async clickAds(adLinksWHandles, log, page, browser) {
+
+        const {adDetails, scrapeResults} = await this.scrapeAds(page, page);
+
+        const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
+        const adHandles = this._adsWHandles.map(ad => ad.handle);
+
+        adLinksWHandles = {adURLs, adHandles};
+
         log("Will wait for 5 seconds before clicking on ads");
         page.waitForTimeout(5000);
         log("Will click on ads");
@@ -587,21 +638,21 @@ class AdCollector extends BaseCollector {
                 }
                 log(`Will load the ad landing page: ${adURL}...`);
 
-                npage = await browser.newPage();
-                await npage.setDefaultTimeout(5000);
-                await npage.setViewport({width: 1920, height: 1080});
+                // npage = await browser.newPage();
+                // await npage.setDefaultTimeout(5000);
+                // await npage.setViewport({width: 1920, height: 1080});
                 // await page.goto(adURL, {waitUntil: 'networkidle2'});
-                await npage.goto(adURL, {waitUntil:"networkidle2"});
+                // await npage.goto(adURL, {waitUntil:"networkidle2"});
                 // npage.waitForNetworkIdle({ idleTime: 1000 })
 
                 // this._clickedAd = true;
                 this._visitedAdUrls.push(adURL);
-                this._adData['urls'].push([npage.url(), adURL, null]);
-                console.error(`visiting_url: ${adURL} - ${npage.url()}`)
+                // this._adData['urls'].push(adURL);
+                console.error(`visiting_url: ${adURL}`)
                 // add host to visited hosts
                 visitedHosts.add(adHostname);
                 // npage.close();
-                await pageUtils.bringMainPageFront(browser);
+                // await pageUtils.bringMainPageFront(browser);
             } catch (error) {
                 log(`❌ Scraper: Error while clicking on ad: ${error}`);
                 // npage.close();
@@ -614,38 +665,35 @@ class AdCollector extends BaseCollector {
             for (const adHandle of adLinksWHandles.adHandles) {
                 // try {
                     // Ritik
-                    var el_onclick = null;
-                    try{
-                        el_onclick = await adHandle.evaluate(el => {
-                            const onclick = el.getAttribute('src');
-                            if (onclick) {
-                                return onclick; // This might contain JavaScript with the URL
-                            } else {
-                                return null;
-                            }
+                    // const adlink = await adHandle.$eval('a', (a) => {return a.href;}).catch(() => null);
+                    // const adlink2 = await this.findHrefFromHandle(adHandle, page)
 
-                        });
-                    } catch (error){
-                        console.error(`error in onclick - ${error}`);
-                        return null;
-                    };
-                    
-                    const adLink = await adHandle.$eval('a', (a) => a.href).catch(() => null);
+                    // const outerHTML = await adHandle.evaluate(el => el.outerHTML);
+                    // console.log('Outer HTML:', outerHTML);
 
-                    // adHandle.click();
+                    // const innerHTML = await adHandle.evaluate(el => el.innerHTML);
+                    // console.log('Inner HTML:', innerHTML);
+                    // // adHandle.click();
 
-                    console.log(`Please look at onclick - ${adLink}`);
+                    // console.log(`Please look at links - ${adlink} - ${adlink2} `);
 
-                    // let newTab = null;
-                    // browser.on('targetcreated', async (target) => {
-                    //     if (target.type() === 'page') {
-                    //     newTab = await target.page();
-                    //     console.log('New tab opened:', await newTab.url());
-                    //     }
-                    // });
+                    // Get the iframe's content frame
+                    const iframe = await adHandle.contentFrame();
+
+                    // Ensure iframe is loaded and ready
+                    if (iframe) {
+                        // Query all `a` tags inside the iframe and extract their href attributes
+                        const hrefs = await iframe.$$eval('a', links => links.map(link => link.href));
+
+                        // Print out all hrefs
+                        // this._adData['landing_pages'].push(hrefs);
+                        console.log('hrefs', hrefs);
+                    } else {
+                        console.log("Iframe not found or couldn't be accessed");
+                    }
 
                     // Listen for new tabs or windows
-                    log(`Will click on the ad:... ${adHandle.type()} -- ${page.type()}"`);
+                    // log(`Will click on the ad:... ${adHandle.type()} -- ${page.type()}"`);
 
                     // let newTab = null;
                     // const [popup] = await Promise.all([
@@ -731,163 +779,79 @@ class AdCollector extends BaseCollector {
         await this.takeScreenshot(page, 'after_scroll');
 
         // Ritik
-        var frames = page.frames();
-        frames.unshift(page);
-
         var adDetailsAll = [];
         var scrapeResultsAll = {'nDetectedAds': 0, 'nAdsScraped': 0, 'nSmallAds': 0, 'nEmptyAds': 0,
             'nRemovedAds': 0,'nAdDisclosureMatched': 0, 'nAdDisclosureUnmatched': 0, 'nClickedAdChoices': 0};
         var urls = [];
         var all_adhandles = 0;
         var page_url = page.url();
+        
+        // var adURLs = null;
+        // var adHandles = null;
 
-
-        for (let frame = 0; frame < frames.length; frame++){ 
-            // run the ad detection script
-            this._adsWHandles = await this.getAllAdAttrsWHandles(frames[frame], this._log);
-
-            if (this._adsWHandles.length === 0) {
-                this._log('No ads found on the frame');
-                continue;
-                // return {adAttrs: [], unmatchedAdDisclosureContents: []};
-            }
-
-            // Sort the ads by their Y position on the page in ascending order
-            // log before and after sorting. Print attrs.boundingBox.y
-            this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
-            
-            // Scrape the ads
-            // adDetails.push({
-            //     ...ad.attrs,
-            //     clickedAdChoiceLink,
-            //     adLinksAndImages,
-            // });
-            const {adDetails, scrapeResults} = await this.scrapeAds(frames[frame], page);
-
-            const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
-            const adHandles = this._adsWHandles.map(ad => ad.handle);
-            
-            // populating urls
-            // for (const adURL of adURLs) {
-            //     try {
-            //         // console.error(`\nadURL: ${adURLs}\n`);
-            //         this._adData['urls'].push(adURL);
-            //         // urls.push(adURL);
-            //     } catch (error) {
-            //         this._log(`❌ Scraper: Error while saving adData: ${error}`);
-            //     }
-            // }
-
-            // populating all_adhandles
-            // this._adData['handles'] = this._adData['handles'] + adHandles.length;
-            // all_adhandles = all_adhandles + adHandles.length;
-
-            // console.error('3333333333\n');
-            // console.error(adHandles);
-
-            // RIGHT NOW CLICKING IS ENABLED
-            if(ENABLE_CLICKING_TO_ADS) {
-                this._log(`Will click on ${adURLs.length} ads and ${adHandles.length} ad handles.`);
-                await this.clickAds({adURLs, adHandles}, this._log, page, options.context);
-            }
-            // we capture the ad disclosure new tabs in the background
-            // we should wait to avoid missing slow disclosure pages
-            this._log('Waiting for 5 seconds after interacting with ads');
-            await page.waitForTimeout(5000);
-
-            const {nMatched, nUnmatched} = this.matchAdChoiceLink(adDetails);
-            scrapeResults.nAdDisclosureMatched = nMatched;
-            scrapeResults.nAdDisclosureUnmatched = nUnmatched;
-            scrapeResults.nClickedAdChoices = this._nClickedAdChoicesLinks;
-
-            if (adDetails.length > 0) {
-                this._log(`✅✅ Detected ${this._adsWHandles.length} ads. Scraped: ${adDetails.length}. ` +
-                            `Clicked: ${this._nClickedAdChoicesLinks} ad disclosure links. `+
-                            `Matched ${nMatched} of ${nMatched + nUnmatched} ad disclosures.`
-                );
-                this._log(`Ad scrape results: ${JSON.stringify(scrapeResults)}`);
-            }
-
-            for (var adD of adDetails){
-                adDetailsAll.push(adD);
-            }
-            Object.keys(scrapeResultsAll).forEach(function(key) {
-                scrapeResultsAll[key] += scrapeResults[key];
-            });
+        this._adsWHandles = await this.getAllAdAttrsWHandles(page, this._log);
+        
+        if (this._adsWHandles.length === 0) {
+            this._log('No ads found on the page');
+            return {adAttrs: [], unmatchedAdDisclosureContents: []};
         }
 
-        await this.saveAdData(page_url);
+        // Sort the ads by their Y position on the page in ascending order
+        // log before and after sorting. Print attrs.boundingBox.y
+        this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
+        const {adDetails, scrapeResults} = await this.scrapeAds(page, page);
 
-        // collating all collected together
-        // this._adData['urls'] = urls;
-        // this._adData['handles'] = all_adhandles;
-    
-        // // run the ad detection script
-        // this._adsWHandles = await this.getAllAdAttrsWHandles(page, this._log);
+        // adLinksAndImages.push({
+        //     frameUrl, containsImgsOrLinks, isMainDocument, parentFrameUrl, frameId,
+        //     parentFrameId, links, frameHandle: elementHandle,
+        //     adChoicesLinksHandles, gwdLinks, imgs, bgImgs, videos, scripts, iframes});
+        // const scrapeResults = {
+        //     nDetectedAds,
+        //     nAdsScraped: adDetails.length,
+        //     nSmallAds,
+        //     nEmptyAds,
+        //     nRemovedAds,
+        // };
+        // return {adDetails, scrapeResults};
 
-        // if (this._adsWHandles.length === 0) {
-        //     this._log('No ads found on the page');
-        //     return {adAttrs: [], unmatchedAdDisclosureContents: []};
-        // }
 
-        // // Sort the ads by their Y position on the page in ascending order
-        // // log before and after sorting. Print attrs.boundingBox.y
-        // this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
-        // // Scrape the ads
-        // const {adDetails, scrapeResults} = await this.scrapeAds(page);
 
-        // // Ritik
-        // const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
-        // const adHandles = this._adsWHandles.map(ad => ad.handle);
+        const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
+        const adHandles = this._adsWHandles.map(ad => ad.handle);
 
-        // var urls = [];
+        const linksWithSS = pageUtils.getAdLinksWithSS(adDetails);
         
-        // for (const adURL of adURLs) {
-        //     try {
-        //         urls.push(adURL);
-        //     } catch (error) {
-        //         console.log(`❌ Scraper: Error while saving adData: ${error}`);
-        //     }
-        // }
+        this._adData = linksWithSS;
+        this.saveAdData(page_url);
+        // we capture the ad disclosure new tabs in the background
+        // we should wait to avoid missing slow disclosure pages
+        this._log('Waiting for 5 seconds after interacting with ads');
+        await page.waitForTimeout(5000);
 
-        // this._adData['urls'] = urls;
-        // this._adData['handles'] = adHandles.length;
-        // // console.error('3333333333\n');
-        // // console.error(adHandles);
-        // await this.saveAdData(page.url());
+        const {nMatched, nUnmatched} = this.matchAdChoiceLink(adDetails);
+        scrapeResults.nAdDisclosureMatched = nMatched;
+        scrapeResults.nAdDisclosureUnmatched = nUnmatched;
+        scrapeResults.nClickedAdChoices = this._nClickedAdChoicesLinks;
 
-        // if(ENABLE_CLICKING_TO_ADS) {
-        //     this._log(`Will click on ${adURLs.length} ads and ${adHandles.length} ad handles.`);
-        //     await this.clickAds({adURLs, adHandles}, this._log, page, options.context);
-        // }
-        // // we capture the ad disclosure new tabs in the background
-        // // we should wait to avoid missing slow disclosure pages
-        // this._log('Waiting for 5 seconds after interacting with ads');
-        // await page.waitForTimeout(5000);
+        if (adDetails.length > 0) {
+            this._log(`✅✅ Detected ${this._adsWHandles.length} ads. Scraped: ${adDetails.length}. ` +
+                        `Clicked: ${this._nClickedAdChoicesLinks} ad disclosure links. `+
+                        `Matched ${nMatched} of ${nMatched + nUnmatched} ad disclosures.`
+            );
+            this._log(`Ad scrape results: ${JSON.stringify(scrapeResults)}`);
+        }
 
-        // const {nMatched, nUnmatched} = this.matchAdChoiceLink(adDetails);
-        // scrapeResults.nAdDisclosureMatched = nMatched;
-        // scrapeResults.nAdDisclosureUnmatched = nUnmatched;
-        // scrapeResults.nClickedAdChoices = this._nClickedAdChoicesLinks;
+        // await this.saveAdData(page_url);
 
-        // if (adDetails.length > 0) {
-        //     this._log(`✅✅ Detected ${this._adsWHandles.length} ads. Scraped: ${adDetails.length}. ` +
-        //                 `Clicked: ${this._nClickedAdChoicesLinks} ad disclosure links. `+
-        //                 `Matched ${nMatched} of ${nMatched + nUnmatched} ad disclosures.`
-        //     );
-        //     this._log(`Ad scrape results: ${JSON.stringify(scrapeResults)}`);
-        // }
-        // return {
-        //     scrapeResults,
-        //     adAttrs: adDetails,
-        //     visitedAdUrls: this._visitedAdUrls,
-        //     unmatchedAdDisclosureContents: this._unmatchedAdDiscContents};
         return {
-            scrapeResultsAll,
-            adAttrs: adDetailsAll,
+            scrapeResults,
+            adAttrs: adDetails,
             visitedAdUrls: this._visitedAdUrls,
-            unmatchedAdDisclosureContents: this._unmatchedAdDiscContents};
-    }
+            unmatchedAdDisclosureContents: this._unmatchedAdDiscContents
+        };
+    };
+        
+    // };
 }
 
 module.exports = AdCollector;

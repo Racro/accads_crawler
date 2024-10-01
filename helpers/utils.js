@@ -216,6 +216,28 @@ function getAdLinksFromAdDetails(adDetails){
     return [...(new Set(linksToClick))];
 }
 
+function getAdLinksWithSS(adDetails){
+    var linksWithSS = {};
+    for (const mainAdDetail of adDetails) {
+        const linksToClick = [];
+        const ss = mainAdDetail.screenshot;
+        for (const links of mainAdDetail.adLinksAndImages) {
+            const gwdLinks = links.gwdLinks;
+            for (const gwdLink of gwdLinks) {
+                const gwdURLs = gwdLink.map(el=>el.googAdUrl).filter(el=>el);
+                linksToClick.push(...gwdURLs);
+            }
+            const normalLinks = links.links;
+            for (const normalLink of normalLinks) {
+                const normalLinkUrls = normalLink.map(el=>el.googAdUrl).filter(el=>el);
+                linksToClick.push(...normalLinkUrls);
+            }
+        }
+        linksWithSS[ss] = {'x': mainAdDetail.x, 'y': mainAdDetail.y, 'width': mainAdDetail.width, 'height': mainAdDetail.height, 'links': linksToClick};
+    }
+    return linksWithSS;
+}
+
 /**
  * @param {puppeteer.ElementHandle | puppeteer.Frame} elementHandle
  * @param {number} adIndex
@@ -562,5 +584,6 @@ module.exports = {
     takeScreenshotOfElement,
     ADCHOICES_REGEX,
     saveHTML,
-    getAdLinksFromAdDetails
+    getAdLinksFromAdDetails,
+    getAdLinksWithSS
 };
