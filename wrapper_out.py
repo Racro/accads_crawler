@@ -74,7 +74,7 @@ def handle_container(container_name, image_name, url, extn):
     time.sleep(1)  # Add delay if necessary
 
 # List of URLs to be crawled
-urls = open('website1.txt', 'r').read().splitlines()
+urls = open('websites.txt', 'r').read().splitlines()
 docker = 0
 vm = 1
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
@@ -128,8 +128,8 @@ elif vm:
                     # Execute a command with a timeout of 5 seconds
                     result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], stdout = subprocess.PIPE, stderr = subprocess.PIPE, timeout=220)
                     print("Command completed:", result)
-                    print("stdout:", stdout)
-                    print("stderr:", stderr)
+                    # print("stdout:", stdout)
+                    # print("stderr:", stderr)
                     break
                 else:
                     tries -= 1
