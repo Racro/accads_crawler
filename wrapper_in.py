@@ -27,7 +27,8 @@ process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 while True:
     curr_time = time.time()
-    if curr_time - start_time < 180 and process.poll() is None: # process.poll() in None if the process is still running
+    # if curr_time - start_time < 180 and process.poll() is None: # process.poll() in None if the process is still running
+    if curr_time - start_time < 180: # process.poll() in None if the process is still running
         time.sleep(5)
     else:
         print(f"Process for {args.url} is still running. Terminating it.")
