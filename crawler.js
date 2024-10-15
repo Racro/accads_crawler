@@ -142,7 +142,7 @@ function openBrowser(log, proxyHost, executablePath, extension) {
     //     args.executablePath = executablePath;
     // }
 
-    args.executablePath = '/tmp/chrome-linux/chrome';
+    args.executablePath = './chrome-linux/chrome';
     // args.executablePath = '/tmp/chrome_97/chrome';
     // args.executablePath = '/usr/bin/google-chrome';
     // args.userDataDir = './saved_session/google_login';
