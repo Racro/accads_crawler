@@ -25,8 +25,8 @@ def setup():
         subprocess.run('source ~/.bashrc', shell=True)
         subprocess.run('nvm install 18.16', shell=True)
 
-    if not os.path.exists('/tmp/chrome-linux'):
-        subprocess.run("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/", shell=True)
+    if not os.path.exists('./chrome-linux'):
+        subprocess.run("wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O ./chrome_97.zip && unzip ./chrome_97.zip -d ./", shell=True)
         
         subprocess.run('npm i', shell=True)
         # os.system('sudo apt install npm@9.6.5')
@@ -74,7 +74,7 @@ def handle_container(container_name, image_name, url, extn):
     time.sleep(1)  # Add delay if necessary
 
 # List of URLs to be crawled
-urls = open('websites.txt', 'r').read().splitlines()
+urls = open('websites_1500.txt', 'r').read().splitlines()
 docker = 0
 vm = 1
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
