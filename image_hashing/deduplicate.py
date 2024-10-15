@@ -42,11 +42,11 @@ def remove_duplicates(images, vector_index, extn):
     interesting_index = []
 
     for image in range(len(images)):
-        d_ind, i_ind = return_index(images[image], vector_index)
-        distance = list(d_ind[0])
-        index = list(i_ind[0])
-        
         try:
+            d_ind, i_ind = return_index(images[image], vector_index)
+            distance = list(d_ind[0])
+            index = list(i_ind[0])
+        
             for d in range(1, len(distance)):
                 # print(f'distance[{d}]', distance[d])
                 if distance[d] < 0.001:
@@ -54,6 +54,7 @@ def remove_duplicates(images, vector_index, extn):
                         interesting_index.append(index[d])
         except Exception as e:
             print(e)
+            continue
 
     if len(interesting_index) > 1:
         interesting_index.sort(reverse=True)
@@ -74,19 +75,23 @@ def adb_in_ctrl():
     mapp['not found'] = []
 
     for image in adb_images:
-        distance, index = return_index(image, 'control.index')
-        distance = distance[0]
-        index = index[0]
+        try:
+            distance, index = return_index(image, 'control.index')
+            distance = distance[0]
+            index = index[0]
 
-        if distance[0] == 0:
-            mapp['found'].append(image)
-        else:
-            mapp['found'].append(image)
+            if distance[0] < 0.001:
+                mapp['found'].append(image)
+            else:
+                mapp['not found'].append(image)
+        except Exception as e:
+            print(e)
+            continue
 
     json.dump(mapp, open('adb_in_ctrl.json', 'w'))
 
-adb_path = '../adblock/adshots'
-control_path = '../control/adshots'
+adb_path = '/run/user/1001/gvfs/smb-share:server=storage.rcs.nyu.edu,share=adblockers/data/adblock/adshots'
+control_path = '/run/user/1001/gvfs/smb-share:server=storage.rcs.nyu.edu,share=adblockers/data/control/adshots'
 # adb_path = 'f2'
 # control_path = 'f1'
 
@@ -94,27 +99,32 @@ control_index = 'control.index'
 adb_index = 'adblock.index'
 
 # remove whitespaces
-control_images = remove_white_images(control_path)
-adb_images = remove_white_images(adb_path)
+# control_images = remove_white_images(control_path)
+# adb_images = remove_white_images(adb_path)
 
 # OCR
-control_images = extract_text(control_images, 'control')
-time.sleep(5)
-adb_images = extract_text(adb_images, 'adblock')
-time.sleep(5)
+# control_images = extract_text(control_images, 'control')
+# time.sleep(5)
+# adb_images = extract_text(adb_images, 'adblock')
+# time.sleep(5)
 
 # control_images = list(json.load(open('ocr_control.json', 'r')).keys())
 # adb_images = list(json.load(open('ocr_adblock.json', 'r')).keys())
 
 # generate vectors
-generate_vectors(control_images, 'control')
-time.sleep(5)
-generate_vectors(adb_images, 'adb')
-time.sleep(5)
+# generate_vectors(control_images, 'control')
+# time.sleep(5)
+# generate_vectors(adb_images, 'adb')
+# time.sleep(5)
 
 # deduplicates
-remove_duplicates(control_images, 'control.index', 'control')
-time.sleep(5)
+
+# dummy (delete the next 2 lines)
+control_images = json.load(open('control_images.json', 'r'))
+adb_images = json.load(open('adb_images.json', 'r'))
+
+# remove_duplicates(control_images, 'control.index', 'control')
+# time.sleep(5)
 remove_duplicates(adb_images, 'adb.index', 'adb')
 time.sleep(5)
 

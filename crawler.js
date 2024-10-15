@@ -19,12 +19,18 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (
 const MOBILE_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; Pixel 2 XL) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/112.0.0.0 Mobile Safari/537.36';
 
 // Ritik
+var xvfb_switch = 1;
+
+
 var xvfb = new Xvfb({
     silent: true,
     reuse: true,
     xvfb_args: ["-screen", "0", '1280x720x24', "-ac"],
 });
-xvfb.startSync((err)=>{if (err) console.error(err)});
+
+if (xvfb_switch === 1){
+    xvfb.startSync((err)=>{if (err) console.error(err)});
+}
 
 const DEFAULT_VIEWPORT = {
     width: 1920,  // px
@@ -53,35 +59,65 @@ function openBrowser(log, proxyHost, executablePath, extension) {
      */
 
     var args = null;
-    if (extension === 'control'){
-        args = {
-            args: [
-                // enable FLoC
-                '--no-sandbox',
-                '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process',
-                '--start-maximized',
-                '--user-data-dir=./temp_session/',
-                // '--user-data-dir=./saved_session/',
-                '--display='+xvfb._display,
-            ]
-        };
-    } else {
-        args = {
-            args: [
-                // enable FLoC
-                '--no-sandbox',
-                '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process',
-                '--start-maximized',
-                `--disable-extensions-except=./extn_src/${extension}_v2`,
-                `--load-extension=./extn_src/${extension}_v2`,
-                // '--user-data-dir=./saved_session/',
-                '--user-data-dir=./temp_session/',
-                '--display='+xvfb._display,
+    if (xvfb_switch === 1){
+        if (extension === 'control'){
+            args = {
+                args: [
+                    // enable FLoC
+                    '--no-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--start-maximized',
+                    '--user-data-dir=./temp_session/',
+                    // '--user-data-dir=./saved_session/',
+                    '--display='+xvfb._display,
+                ]
+            };
+        } else {
+            args = {
+                args: [
+                    // enable FLoC
+                    '--no-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--start-maximized',
+                    `--disable-extensions-except=./extn_src/${extension}_v2`,
+                    `--load-extension=./extn_src/${extension}_v2`,
+                    // '--user-data-dir=./saved_session/',
+                    '--user-data-dir=./temp_session/',
+                    '--display='+xvfb._display,
 
-            ]
-        };
+                ]
+            };
+        }
+    } else {
+        if (extension === 'control'){
+            args = {
+                args: [
+                    // enable FLoC
+                    '--no-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--start-maximized',
+                    '--user-data-dir=./temp_session/',
+                    // '--user-data-dir=./saved_session/'
+                ]
+            };
+        } else {
+            args = {
+                args: [
+                    // enable FLoC
+                    '--no-sandbox',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--start-maximized',
+                    `--disable-extensions-except=./extn_src/${extension}_v2`,
+                    `--load-extension=./extn_src/${extension}_v2`,
+                    // '--user-data-dir=./saved_session/',
+                    '--user-data-dir=./temp_session/'
+                ]
+            };
+        }
     }
 
     if (VISUAL_DEBUG) {

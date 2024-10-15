@@ -1,6 +1,7 @@
 const BaseReporter = require('./BaseReporter');
 const ProgressBar = require('progress');
 const chalk = require('chalk').default;
+const fs = require('fs');
 
 class CLIReporter extends BaseReporter {
     id() {
@@ -34,7 +35,11 @@ class CLIReporter extends BaseReporter {
      */
     alwaysLog(...msg) {
         // eslint-disable-next-line no-console
-        console.log(...msg);
+        try{
+            console.log(...msg);
+        } catch (err){
+            fs.writeFileSync('./error.txt', err);
+        }
     }
 
     /**
@@ -43,7 +48,11 @@ class CLIReporter extends BaseReporter {
     log(...msg) {
         if (this.verbose) {
             // eslint-disable-next-line no-console
-            console.log(...msg);
+            try{
+                console.log(...msg);
+            } catch (err) {
+                fs.writeFileSync('./error.txt', err);
+            }
         }
     }
 
