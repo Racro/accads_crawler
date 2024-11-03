@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@duckduckgo/autoconsent": "^2.2.1",
-    "@gorhill/ubo-core": "^0.1.25",
+    "@gorhill/ubo-core": "0.1.25",
     "async": "^2.6.1",
     "cd": "^0.3.3",
     "chalk": "^2.4.1",
