@@ -65,7 +65,7 @@ def check_and_start_container(container_name, image_name, extn):
         print(f"Container {container_name} is already running.")
 
 def feed_url_to_container(container_name, url, extn):
-    command = f'docker exec -i {container_name} python3 wrapper_in.py --url={url} --extn={extn}'
+    command = f'docker exec -i {container_name} python3 docker_in.py --url {url} --extn {extn}'
     subprocess.run(command, shell=True)
 
 def handle_container(container_name, image_name, url, extn):
@@ -74,9 +74,9 @@ def handle_container(container_name, image_name, url, extn):
     time.sleep(1)  # Add delay if necessary
 
 # List of URLs to be crawled
-urls = open('websites_1500.txt', 'r').read().splitlines()
-docker = 0
-vm = 1
+urls = open('websites.txt', 'r').read().splitlines()
+docker = 1
+vm = 0
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
 parser.add_argument('--extn', type=str)
 args = parser.parse_args()
@@ -100,7 +100,7 @@ if docker:
         p1.start()
         p2.start()
 
-        TIMEOUT = 70
+        TIMEOUT = 90
         start = time.time()
         print("joining jobs")
         # Wait for all processes to finish
