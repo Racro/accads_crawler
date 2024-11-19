@@ -11,7 +11,7 @@ RUN apt-get update
 RUN apt-get install -y chromium-browser libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libasound2t64 libxi6 libxtst6 libnss3 libxss1 libxrandr2 libpangocairo-1.0-0 libgtk-3-0 libgbm1 xdg-utils fonts-liberation libappindicator3-1 lsb-release wget git xvfb nodejs npm vim unzip
 
 # Install the chrome 97
-RUN wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/chrome_temp && mv /tmp/chrome_temp/chrome-linux /tmp/chrome_97
+# RUN wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/chrome_temp && mv /tmp/chrome_temp/chrome-linux /tmp/chrome_97
 # && mv /tmp/chrome-linux /tmp/chrome_97
 
 # Install NPM version
@@ -22,12 +22,14 @@ RUN useradd -m chromiumuser
 USER chromiumuser
 WORKDIR /home/chromiumuser
 
-COPY wrapper_in.py /home/chromiumuser/wrapper_in.py
+COPY docker_in.py /home/chromiumuser/docker_in.py
 
 # Install the git repo
 RUN git clone https://github.com/Racro/accads_crawler.git
 
-# ADD ./saved_session /home/chromiumuser/accads_crawler/saved_session
+RUN wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /home/chromiumuser/accads_crawler/chrome_97.zip && unzip /home/chromiumuser/accads_crawler/chrome_97.zip -d /home/chromiumuser/accads_crawler/
+
+# ./saved_session /home/chromiumuser/accads_crawler/saved_session
 
 # Install puppeteer
 # RUN cd accads_crawler && npm i --verbose
