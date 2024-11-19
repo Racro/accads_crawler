@@ -30,7 +30,7 @@ def return_index(image_path, index):
 
     #Read the index file and perform search of top-3 images
     # index = faiss.read_index("vector.index")
-    index = faiss.read_index(index)
+    # index = faiss.read_index(index)
     # print(type(index))
     d,i = index.search(vector,10)
     return d, i
