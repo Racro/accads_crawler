@@ -3,5 +3,9 @@ node_modules
 .vscode/
 data/
 data1/
-summary.json
+**/*.json
 **/*.zip
+**/temp_session
+**/saved_session
+**/login
+

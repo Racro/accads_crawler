@@ -19,7 +19,7 @@ const DEFAULT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (
 const MOBILE_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; Pixel 2 XL) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/112.0.0.0 Mobile Safari/537.36';
 
 // Ritik
-var xvfb_switch = 1;
+var xvfb_switch = 0;
 
 
 var xvfb = new Xvfb({
