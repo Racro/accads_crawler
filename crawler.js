@@ -81,8 +81,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                     '--disable-web-security',
                     '--disable-features=IsolateOrigins,site-per-process',
                     '--start-maximized',
-                    `--disable-extensions-except=./extn_src/${extension}_v2`,
-                    `--load-extension=./extn_src/${extension}_v2`,
+                    // `--disable-extensions-except=./extn_src/${extension}_v2`,
+                    // `--load-extension=./extn_src/${extension}_v2`,
                     // '--user-data-dir=./saved_session/',
                     '--user-data-dir=./temp_session/',
                     '--display='+xvfb._display,
@@ -111,8 +111,8 @@ function openBrowser(log, proxyHost, executablePath, extension) {
                     '--disable-web-security',
                     '--disable-features=IsolateOrigins,site-per-process',
                     '--start-maximized',
-                    `--disable-extensions-except=./extn_src/${extension}_v2`,
-                    `--load-extension=./extn_src/${extension}_v2`,
+                    // `--disable-extensions-except=./extn_src/${extension}_v2`,
+                    // `--load-extension=./extn_src/${extension}_v2`,
                     // '--user-data-dir=./saved_session/',
                     '--user-data-dir=./temp_session/'
                 ]
@@ -455,7 +455,8 @@ module.exports = async (url, options) => {
     
 
 
-    if (options.extension === 'adblock'){
+    // if (options.extension === 'adblock'){
+    if (options.extension === 'adblock1'){
         try {
         // const test = await browser.newPage();
         // // await test.setViewport({ width: 1280, height: 720 });

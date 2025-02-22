@@ -74,7 +74,7 @@ def handle_container(container_name, image_name, url, extn):
     time.sleep(1)  # Add delay if necessary
 
 # List of URLs to be crawled
-urls = open('websites.txt', 'r').read().splitlines()
+urls = open('websites_1500.txt', 'r').read().splitlines()[:1000]
 docker = 1
 vm = 0
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
