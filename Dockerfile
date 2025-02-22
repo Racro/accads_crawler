@@ -10,6 +10,14 @@ RUN apt-get update
 # Install necessary packages
 RUN apt-get install -y chromium-browser libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libasound2t64 libxi6 libxtst6 libnss3 libxss1 libxrandr2 libpangocairo-1.0-0 libgtk-3-0 libgbm1 xdg-utils fonts-liberation libappindicator3-1 lsb-release wget git xvfb nodejs npm vim unzip
 
+# Install necessary packages
+RUN apt-get install -y x11-xkb-utils xkb-data
+
+# Fix ownership of /tmp/.X11-unix
+RUN mkdir -p /tmp/.X11-unix && chown root:root /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+# RUN chown root:root /tmp/.X11-unix && sudo chmod 1777 /tmp/.X11-unix
+
 # Install the chrome 97
 # RUN wget -q 'https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F978038%2Fchrome-linux.zip?generation=1646544045015587&alt=media' -O /tmp/chrome_97.zip && unzip /tmp/chrome_97.zip -d /tmp/chrome_temp && mv /tmp/chrome_temp/chrome-linux /tmp/chrome_97
 # && mv /tmp/chrome-linux /tmp/chrome_97

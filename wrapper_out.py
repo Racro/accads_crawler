@@ -65,7 +65,7 @@ def check_and_start_container(container_name, image_name, extn):
         print(f"Container {container_name} is already running.")
 
 def feed_url_to_container(container_name, url, extn):
-    command = f'docker exec -i {container_name} python3 docker_in.py --url {url} --extn {extn}'
+    command = f'docker exec -i {container_name} xvfb-run python3 docker_in.py --url {url} --extn {extn}'
     subprocess.run(command, shell=True)
 
 def handle_container(container_name, image_name, url, extn):
@@ -89,7 +89,7 @@ if docker:
     # containers = ["accads_control"]
 
     # Build Docker images (assuming Dockerfiles are in the current directory)
-    subprocess.run(["docker", "build", "-t", "accads", "-f", "Dockerfile", "."])
+    subprocess.run(["docker", "build", "--no-cache", "-t", "accads", "-f", "Dockerfile", "."])
     for url in urls:
         # Create multiprocessing processes
         processes = []

@@ -802,7 +802,7 @@ class AdCollector extends BaseCollector {
         var page_url = page.url();
 
         // Screenshot check for login
-        await this.check_login(options.context);
+        // await this.check_login(options.context);
         await pageUtils.bringMainPageFront(options.context);
         
         // var adURLs = null;
