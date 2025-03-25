@@ -220,20 +220,32 @@ function getAdLinksWithSS(adDetails){
     var linksWithSS = {};
     for (const mainAdDetail of adDetails) {
         const linksToClick = [];
+        const linksToClickHref = [];
+        const frameHandle_lst = [];
+
         const ss = mainAdDetail.screenshot;
-        for (const links of mainAdDetail.adLinksAndImages) {
-            const gwdLinks = links.gwdLinks;
+        for (const adLinkAndImage of mainAdDetail.adLinksAndImages) {
+            const frameHandle = adLinkAndImage.frameHandle;
+            frameHandle_lst.push(frameHandle);
+
+            const links = adLinkAndImage.links;
+            const gwdLinks = links.gwdLinks || [];
             for (const gwdLink of gwdLinks) {
-                const gwdURLs = gwdLink.map(el=>el.googAdUrl).filter(el=>el);
-                linksToClick.push(...gwdURLs);
+                for (const el of gwdLink) {
+                    if (el.googAdUrl) linksToClick.push(el.googAdUrl);
+                    if (el.href) linksToClickHref.push(el.href);
+                }
             }
-            const normalLinks = links.links;
+
+            const normalLinks = links.links || [];
             for (const normalLink of normalLinks) {
-                const normalLinkUrls = normalLink.map(el=>el.googAdUrl).filter(el=>el);
-                linksToClick.push(...normalLinkUrls);
+                for (const el of normalLink) {
+                    if (el.googAdUrl) linksToClick.push(el.googAdUrl);
+                    if (el.href) linksToClickHref.push(el.href);
+                }
             }
         }
-        linksWithSS[ss] = {'x': mainAdDetail.x, 'y': mainAdDetail.y, 'width': mainAdDetail.width, 'height': mainAdDetail.height, 'links': linksToClick};
+        linksWithSS[ss] = {'x': mainAdDetail.x, 'y': mainAdDetail.y, 'width': mainAdDetail.width, 'height': mainAdDetail.height, 'links': linksToClick, 'href': linksToClickHref, 'adHandles': frameHandle_lst, clicked: []};
     }
     return linksWithSS;
 }

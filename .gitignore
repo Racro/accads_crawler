@@ -8,4 +8,6 @@ data1/
 **/temp_session
 **/saved_session
 **/login
-
+**/image_hashing
+**/control
+**/chrome*

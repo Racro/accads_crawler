@@ -555,7 +555,7 @@ class AdCollector extends BaseCollector {
             // // const clickedAdChoiceLink = await this.clickAdchoiceLinkInAd(adLinksAndImages, log, page);
             // ad.attrs.clickedAdChoiceLink = clickedAdChoiceLink;
 
-            this.removeUnneededAttrs(adLinksAndImages);
+            // this.removeUnneededAttrs(adLinksAndImages);
             adDetails.push({
                 ...ad.attrs,
                 // clickedAdChoiceLink,
@@ -626,137 +626,68 @@ class AdCollector extends BaseCollector {
      * @param {any} page
      * @param {any} browser
      */
-    async clickAds(adLinksWHandles, log, page, browser) {
+    async clickAd(linksWithSS, log, page, browser) {
+        const ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES = true;
+        const originalUrl = page.url();
+        let newPage = null; 
 
-        const {adDetails, scrapeResults} = await this.scrapeAds(page, page);
-
-        const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
-        const adHandles = this._adsWHandles.map(ad => ad.handle);
-
-        adLinksWHandles = {adURLs, adHandles};
-
-        log("Will wait for 5 seconds before clicking on ads");
-        page.waitForTimeout(5000);
-        log("Will click on ads");
-
-        // Ritik
-        // this._page = browser.pages()[0]
-        
-        const visitedHosts = new Set();
-        for (const adURL of adLinksWHandles.adURLs) {
-            var npage = null;
+        const handleTargetCreated = async (target) => {
             try {
-                const adHostname = new URL(adURL).hostname;
-                if (visitedHosts.has(adHostname)) {
-                    log(`Ad clicker: Ad URL host ${adURL} has already been visited. Skipping...`);
+                if (target.type() === 'page') {
+                    const targetPage = await target.page();
+                    await targetPage.bringToFront();
+                    await targetPage.waitForNavigation({ waitUntil: 'load', timeout: 5000 }).catch(() => {});
+                    newPage = targetPage;
+                }
+            } catch (err) {
+                log(`Error handling new tab: ${err}`);
+            }
+        };
+        
+        browser.on('targetcreated', handleTargetCreated);
+
+        if (ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES) {
+            for (const adHandle of linksWithSS.adHandles) {
+                if ((linksWithSS.links.length > 0) || (linksWithSS.href.length > 0)){
                     continue;
                 }
-                log(`Will load the ad landing page: ${adURL}...`);
 
-                // npage = await browser.newPage();
-                // await npage.setDefaultTimeout(5000);
-                // await npage.setViewport({width: 1920, height: 1080});
-                // await page.goto(adURL, {waitUntil: 'networkidle2'});
-                // await npage.goto(adURL, {waitUntil:"networkidle2"});
-                // npage.waitForNetworkIdle({ idleTime: 1000 })
+                try {
+                    log("Will click on the ad:...");
+                    const oldPages = await browser.pages();
+                    await adHandle.click();
 
-                // this._clickedAd = true;
-                this._visitedAdUrls.push(adURL);
-                // this._adData['urls'].push(adURL);
-                console.error(`visiting_url: ${adURL}`)
-                // add host to visited hosts
-                visitedHosts.add(adHostname);
-                // npage.close();
-                // await pageUtils.bringMainPageFront(browser);
-            } catch (error) {
-                log(`❌ Scraper: Error while clicking on ad: ${error}`);
-                // npage.close();
-                await pageUtils.bringMainPageFront(browser);
-            }
-        }
-
-        const ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES = true;
-        if (ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES) {
-            for (const adHandle of adLinksWHandles.adHandles) {
-                // try {
-                    // Ritik
-                    // const adlink = await adHandle.$eval('a', (a) => {return a.href;}).catch(() => null);
-                    // const adlink2 = await this.findHrefFromHandle(adHandle, page)
-
-                    // const outerHTML = await adHandle.evaluate(el => el.outerHTML);
-                    // console.log('Outer HTML:', outerHTML);
-
-                    // const innerHTML = await adHandle.evaluate(el => el.innerHTML);
-                    // console.log('Inner HTML:', innerHTML);
-                    // // adHandle.click();
-
-                    // console.log(`Please look at links - ${adlink} - ${adlink2} `);
-
-                    // Get the iframe's content frame
-                    const iframe = await adHandle.contentFrame();
-
-                    // Ensure iframe is loaded and ready
-                    if (iframe) {
-                        // Query all `a` tags inside the iframe and extract their href attributes
-                        const hrefs = await iframe.$$eval('a', links => links.map(link => link.href));
-
-                        // Print out all hrefs
-                        // this._adData['landing_pages'].push(hrefs);
-                        console.log('hrefs', hrefs);
-                    } else {
-                        console.log("Iframe not found or couldn't be accessed");
+                    // Wait a moment to allow new tab or same tab nav
+                    await page.waitForTimeout(3000);
+                    
+                    // Check for same-tab navigation
+                    const currentUrl = page.url();
+                    if (currentUrl !== originalUrl) {
+                        log(`🔗 Navigation occurred in same tab: ${currentUrl}`);
+                        linksWithSS.clicked.push(currentUrl);
+                        break; // Stop further clicks
                     }
 
-                    // Listen for new tabs or windows
-                    // log(`Will click on the ad:... ${adHandle.type()} -- ${page.type()}"`);
+                    // Check if a new tab was opened
+                    const allPages = await browser.pages();
+                    const newTabs = allPages.filter(p => !oldPages.includes(p));
 
-                    // let newTab = null;
-                    // const [popup] = await Promise.all([
-                    //     new Promise((resolve) => browser.once('targetcreated', resolve)), // Wait for a new target (tab)
-                    //     adHandle.click() // Click on the element
-                    // ]);
-
-                    // Check if the target is a new page (new tab or window)
-                    // if (popup) {
-                    //     newTab = await popup.page(); // Get the page from the newly created target
-                    //     await newTab.waitForTimeout(1000); // Wait for some time if needed for the new tab to load
-                    //     console.log('New tab opened:', await newTab.url());
-                    // }
+                    if (newTabs.length > 0) {
+                        newPage = newTabs[0]; // assuming only 1 newtab opened
+                        const landingUrl = newPage.url();
+                        log(`🆕 New tab opened with URL: ${landingUrl}`);
+                        linksWithSS.clicked.push(landingUrl);
+                        break; // Stop further clicks
+                    }
 
 
-                    // await adHandle.click();
-
-                    // Ritik
-                    // If a new tab was opened, close it
-                    
-                    // if (newTab) {
-                    //     this._adData['urls'].push([newTab.url(), el_onclick, adHandle['attrs']['screenshot']]);
-                    //     await newTab.close();
-                    //     console.log('New tab closed');
-                    // }
-                    
-                    // Wait for the final navigation (redirects) to complete
-                    // if (newTab) {
-                    //     await newTab.waitForNavigation({ waitUntil: 'networkidle0' });
-                    //     const finalLandingPageUrl = newTab.url(); // Capture final landing page URL
-                    //     console.log('Final landing page URL (U\'):', finalLandingPageUrl);
-                    //     await newTab.close(); // Optionally close the new tab
-                    // } else {
-                    //     await page.waitForNavigation({ waitUntil: 'networkidle0' });
-                    //     const finalLandingPageUrl = page.url(); // Final landing page URL in the same tab
-                    //     console.log('Final landing page URL (U\'):', finalLandingPageUrl);
-                    // }
-
-
-                    await page.waitForTimeout(2000);
-                    await pageUtils.bringMainPageFront(browser);
-
-                // } catch (error) {
-                //     log(`❌ Scraper: Error while clicking on ad: ${error}`);
-                // }
+                } catch (error) {
+                    log(`❌ Scraper: Error while clicking on ad: ${error}`);
+                    continue;
+                }
             }
         }
-        log('Will wait for 5 second after clicking ads');
+        log('Will wait for 2 second after clicking ads');
         await page.waitForTimeout(2000);
         await pageUtils.bringMainPageFront(browser);
         // await page.waitForTimeout(5000);
@@ -820,25 +751,10 @@ class AdCollector extends BaseCollector {
         this._adsWHandles.sort((a, b) => a.attrs.y - b.attrs.y);
         const {adDetails, scrapeResults} = await this.scrapeAds(page, page);
 
-        // adLinksAndImages.push({
-        //     frameUrl, containsImgsOrLinks, isMainDocument, parentFrameUrl, frameId,
-        //     parentFrameId, links, frameHandle: elementHandle,
-        //     adChoicesLinksHandles, gwdLinks, imgs, bgImgs, videos, scripts, iframes});
-        // const scrapeResults = {
-        //     nDetectedAds,
-        //     nAdsScraped: adDetails.length,
-        //     nSmallAds,
-        //     nEmptyAds,
-        //     nRemovedAds,
-        // };
-        // return {adDetails, scrapeResults};
-
-
-
-        const adURLs = pageUtils.getAdLinksFromAdDetails(adDetails);
-        const adHandles = this._adsWHandles.map(ad => ad.handle);
-
-        const linksWithSS = pageUtils.getAdLinksWithSS(adDetails);
+   
+        var linksWithSS = pageUtils.getAdLinksWithSS(adDetails);
+        
+        await this.clickAd(linksWithSS, this._log, page, options.context);
         
         this._adData = linksWithSS;
         await this.saveAdData(page_url);
