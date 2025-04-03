@@ -647,46 +647,58 @@ class AdCollector extends BaseCollector {
         browser.on('targetcreated', handleTargetCreated);
 
         if (ENABLE_CLICKING_TO_ADS_VIA_AD_HANDLES) {
-            for (const adHandle of linksWithSS.adHandles) {
-                if ((linksWithSS.links.length > 0) || (linksWithSS.href.length > 0)){
+            console.log(linksWithSS);
+          
+            for (const [ss, data] of Object.entries(linksWithSS)) {
+                // Skip if link was already found
+                if ((data.links.length > 0) || (data.href.length > 0)) {
                     continue;
                 }
+            
+                for (const adHandle of data.adHandles) {
+                    try {
+                        if ('_name' in adHandle && adHandle._name === '') {
+                            log('⚠️ Skipping unnamed frame (empty _name)');
+                            continue;
+                          }
 
-                try {
-                    log("Will click on the ad:...");
-                    const oldPages = await browser.pages();
-                    await adHandle.click();
+                        log("🖱️ Will click on the ad handle...");
+                        const oldPages = await browser.pages();
+                        await adHandle.click();
+                
+                        // Wait a moment to allow new tab or same tab nav
+                        await page.waitForTimeout(3000);
+                
+                        // Check for same-tab navigation
+                        const currentUrl = page.url();
+                        if (currentUrl !== originalUrl) {
+                            log(`🔗 Navigation occurred in same tab: ${currentUrl}`);
+                            data.clicked.push(currentUrl);
+                            break; // Stop further clicks for this image
+                        }
+                
+                        // Check if a new tab was opened
+                        const allPages = await browser.pages();
+                        const newTabs = allPages.filter(p => !oldPages.includes(p));
+                
+                        if (newTabs.length > 0) {
+                            const newPage = newTabs[0];
+                            const landingUrl = newPage.url();
+                            log(`🆕 New tab opened with URL: ${landingUrl}`);
+                            data.clicked.push(landingUrl);
 
-                    // Wait a moment to allow new tab or same tab nav
-                    await page.waitForTimeout(3000);
-                    
-                    // Check for same-tab navigation
-                    const currentUrl = page.url();
-                    if (currentUrl !== originalUrl) {
-                        log(`🔗 Navigation occurred in same tab: ${currentUrl}`);
-                        linksWithSS.clicked.push(currentUrl);
-                        break; // Stop further clicks
+                            // ✅ Close the new tab
+                            await newPage.close();
+                            break;
+                        }
+                    } catch (error) {
+                        log(`❌ Error while clicking adHandle: ${error}`);
+                        continue;
                     }
-
-                    // Check if a new tab was opened
-                    const allPages = await browser.pages();
-                    const newTabs = allPages.filter(p => !oldPages.includes(p));
-
-                    if (newTabs.length > 0) {
-                        newPage = newTabs[0]; // assuming only 1 newtab opened
-                        const landingUrl = newPage.url();
-                        log(`🆕 New tab opened with URL: ${landingUrl}`);
-                        linksWithSS.clicked.push(landingUrl);
-                        break; // Stop further clicks
-                    }
-
-
-                } catch (error) {
-                    log(`❌ Scraper: Error while clicking on ad: ${error}`);
-                    continue;
                 }
             }
         }
+          
         log('Will wait for 2 second after clicking ads');
         await page.waitForTimeout(2000);
         await pageUtils.bringMainPageFront(browser);
@@ -733,8 +745,8 @@ class AdCollector extends BaseCollector {
         var page_url = page.url();
 
         // Screenshot check for login
-        await this.check_login(options.context);
-        await pageUtils.bringMainPageFront(options.context);
+        // await this.check_login(options.context);
+        // await pageUtils.bringMainPageFront(options.context);
         
         // var adURLs = null;
         // var adHandles = null;
@@ -753,7 +765,7 @@ class AdCollector extends BaseCollector {
 
    
         var linksWithSS = pageUtils.getAdLinksWithSS(adDetails);
-        
+        // console.log(linksWithSS)
         await this.clickAd(linksWithSS, this._log, page, options.context);
         
         this._adData = linksWithSS;

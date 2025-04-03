@@ -17,7 +17,7 @@ cmd = [
         'npm', 'run', 'crawl', '--',
         '-u', args.url,
         '-o', f'./{args.extn}/',
-        '-v', '-f', '-d', 'requests,cookies,ads,screenshots,cmps,videos',
+        '-v', '-f', '-d', 'requests,cookies,ads,screenshots',
         '--reporters', 'cli,file',
         '-l', f'./{args.extn}/',
         '--autoconsent-action', 'optIn',
@@ -27,6 +27,7 @@ process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 while True:
     curr_time = time.time()
+    print(curr_time)
     # if curr_time - start_time < 180 and process.poll() is None: # process.poll() in None if the process is still running
     if curr_time - start_time < 180: # process.poll() in None if the process is still running
         time.sleep(5)

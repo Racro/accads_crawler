@@ -75,10 +75,10 @@ def handle_container(container_name, image_name, url, extn):
 
 # List of URLs to be crawled
 urls = open('websites.txt', 'r').read().splitlines()
-docker = 1
-vm = 0
+docker = 0
+vm = 1
 parser = argparse.ArgumentParser(description='Specify Extension for wrapper_out.py')
-parser.add_argument('--extn', type=str)
+parser.add_argument('--extn', type=str, default='control')
 args = parser.parse_args()
 
 create_data_directories()
@@ -121,26 +121,23 @@ elif vm:
         try:
             tries = 3
             while tries > 0:
-                copy_session()
-                time.sleep(2)
-
-                if os.path.exists('./temp_session'):
+                try:
                     # Execute a command with a timeout of 5 seconds
-                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], stdout = subprocess.PIPE, stderr = subprocess.PIPE, timeout=220)
+                    result = subprocess.run(['python3', 'wrapper_in.py', '--url', url, '--extn', args.extn], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                     print("Command completed:", result)
                     # print("stdout:", stdout)
                     # print("stderr:", stderr)
                     break
-                else:
+                except Exception as e:
+                    print(e)
                     tries -= 1
 
         except subprocess.TimeoutExpired:
             print("Command timed out and was terminated.")
 
         time.sleep(2)
+        # input()
 
-        while os.path.exists('./temp_session'):
-            subprocess.run('rm -rf temp_session', shell=True)
 else:
     print('PLEASE SPECIFY EITHER OF DOCKER OR VM')
 
